@@ -12,7 +12,7 @@ public class SwiftcordLegacy {
     internal let token: String
     internal let session: URLSessionCompat
     
-    public var dms: [DM] = []
+    public var dms: [Snowflake: DM] = [:]
     
     public init(token: String) {
         self.token = token
@@ -26,11 +26,9 @@ public class SwiftcordLegacy {
     public func getDMChannels(completion: @escaping ([[String: Any]], Error?) -> ()) {
         self.request(.getDMChannels) { data, error in
             if let data = data {
-                let channels = data as! [[String: Any]]
+                let channelArray = data as! [[String: Any]]
                 
-                
-                
-                completion(channels, nil)
+                completion(channelArray, nil)
             }
         }
         
@@ -38,27 +36,31 @@ public class SwiftcordLegacy {
     
     
     public func getDMs(completion: @escaping ([DM], Error?) -> ()) {
-        self.getDMChannels() { channels, error in
+        self.getDMChannels() { channelArray, error in
             
-            var dms: [DM] = []
+            //MARK: so it's sorted when viewing
+            var sortedDMs: [DM] = []
             
-            for channel in channels {
+            for channel in channelArray {
                 if let type = channel["type"] as? Int, type == 1 {
-                    let dm = DM(channel)
-                    dms.append(dm)
+                    let dm = DM(self, channel)
+                    self.dms[dm.id!] = dm
                 }
             }
             
+            for (_,dm) in self.dms {
+                sortedDMs.append(dm)
+            }
+            
             //MARK: need to understand, but it makes the dms in the right order!
-            dms.sort(by: {
+            sortedDMs.sort(by: {
                 let id1 = $0.lastMessageID?.rawValue ?? 0
                 let id2 = $1.lastMessageID?.rawValue ?? 0
                 return id1 > id2
             })
             
-            self.dms = dms
             
-            completion(self.dms, nil)
+            completion(sortedDMs, nil)
         }
         
     }
@@ -71,11 +73,24 @@ public class SwiftcordLegacy {
                 let messageArray = data as! [[String: Any]]
                 
                 for messageJson in messageArray {
-                    messages.append(Message(messageJson))
+                    messages.append(Message(self, messageJson))
                 }
                 
                 completion(messages, nil)
             }
+        }
+    }
+    
+    public func getGuilds(completion: @escaping ([Guild], Error?) -> ()) {
+        self.request(.getGuilds) { data, error in
+            let guildArray = data as! [[String: Any]]
+            var guilds: [Guild] = []
+            
+            for guild in guildArray {
+                guilds.append(Guild(guild)!)
+            }
+            
+            completion(guilds, nil)
         }
     }
     

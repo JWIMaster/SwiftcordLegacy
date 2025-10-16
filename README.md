@@ -1,3 +1,3 @@
 # SwiftcordLegacy
 
-A description of this package.
+The API backend used in UniCord

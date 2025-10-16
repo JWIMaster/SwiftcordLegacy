@@ -10,6 +10,7 @@ import Foundation
 public enum Endpoint {
     case getDMChannels
     case getMessages(Snowflake)
+    case getGuilds
 }
 
 typealias EndpointInfo = (method: HTTPMethod, url: String)
@@ -29,6 +30,8 @@ extension Endpoint {
             return(.get, "/users/@me/channels")
         case let .getMessages(channelID):
             return(.get, "/channels/\(channelID)/messages")
+        case .getGuilds:
+            return (.get, "/users/@me/guilds")
         }
     }
 }

@@ -15,6 +15,12 @@ public extension SwiftcordLegacy {
         
         var request = URLRequest(url: url!)
         request.addValue(self.token, forHTTPHeaderField: "Authorization")
+        
+        request.addValue(
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) discord/1.0.9211 Chrome/134.0.6998.205 Electron/35.3.0 Safari/537.36",
+          forHTTPHeaderField: "User-Agent"
+        )
+        
         request.httpMethod = endpoint.httpInfo.method.rawValue
         
         let task = self.session.dataTask(with: request) { data, response, error in
