@@ -34,12 +34,9 @@ public class SwiftcordLegacy {
         
     }
     
-    
-    public func getDMs(completion: @escaping ([DM], Error?) -> ()) {
+    public func getDMs(completion: @escaping ([Snowflake: DM], Error?) -> ()) {
         self.getDMChannels() { channelArray, error in
             
-            //MARK: so it's sorted when viewing
-            var sortedDMs: [DM] = []
             
             for channel in channelArray {
                 if let type = channel["type"] as? Int, type == 1 {
@@ -48,22 +45,11 @@ public class SwiftcordLegacy {
                 }
             }
             
-            for (_,dm) in self.dms {
-                sortedDMs.append(dm)
-            }
-            
-            //MARK: need to understand, but it makes the dms in the right order!
-            sortedDMs.sort(by: {
-                let id1 = $0.lastMessageID?.rawValue ?? 0
-                let id2 = $1.lastMessageID?.rawValue ?? 0
-                return id1 > id2
-            })
-            
-            
-            completion(sortedDMs, nil)
+            completion(self.dms, nil)
         }
         
     }
+    
     
     public func getChannelMessages(for channel: Snowflake, completion: @escaping ([Message], Error?) -> ()) {
         self.request(.getMessages(channel)) { data, error in
@@ -76,7 +62,8 @@ public class SwiftcordLegacy {
                     messages.append(Message(self, messageJson))
                 }
                 
-                completion(messages, nil)
+                //MARK: do this so that it returns the newest ones at the bottom, as that's how messages are presented
+                completion(messages.reversed(), nil)
             }
         }
     }
