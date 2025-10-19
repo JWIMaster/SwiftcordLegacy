@@ -17,8 +17,13 @@ public struct Message {
     
     
     public init(_ swiftcordLegacy: SwiftcordLegacy, _ json: [String: Any]) {
-        self.id = Snowflake(json["id"] as! String)
-        self.author = User(json["author"] as! [String: Any])
+        self.id = Snowflake(json["id"])
+        
+        if let authorJson = json["author"] as? [String: Any] {
+            self.author = User(swiftcordLegacy, authorJson)
+        } else {
+            self.author = nil
+        }
         self.content = json["content"] as? String
         self.date = json["date"] as? Date
     }

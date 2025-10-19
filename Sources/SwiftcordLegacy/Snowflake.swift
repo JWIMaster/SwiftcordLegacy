@@ -22,6 +22,19 @@ public struct Snowflake: Comparable, Hashable, CustomStringConvertible {
         guard let value = UInt64(string) else { return nil }
         self.rawValue = value
     }
+    
+    public init?(_ any: Any?) {
+      guard let any = any else {
+        return nil
+      }
+      
+      if let string = any as? String, let snowflake = UInt64(string) {
+        self.init(snowflake)
+        return
+      }
+      
+      return nil
+    }
 
     // Comparable
     public static func < (lhs: Snowflake, rhs: Snowflake) -> Bool {
