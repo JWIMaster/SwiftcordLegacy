@@ -8,7 +8,7 @@
 import Foundation
 import FoundationCompatKit
 
-public extension SwiftcordLegacy {
+public extension SLClient {
     func request(_ endpoint: Endpoint, body: [String: Any]? = nil, completion: @escaping (Any?, Error?) -> ()) {
         
         let url = URL(string: "https://discordapp.com/api/v9\(endpoint.httpInfo.url)")
@@ -34,7 +34,7 @@ public extension SwiftcordLegacy {
                     let json = try JSONSerialization.jsonObject(with: data)
                     completion(json, nil)
                 } catch {
-                    
+                    NSLog("erm whoops")
                 }
             }
         }

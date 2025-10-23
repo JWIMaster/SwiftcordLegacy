@@ -7,7 +7,7 @@
 
 import Foundation
 
-extension SwiftcordLegacy {
+extension SLClient {
     public func getSortedDMs(completion: @escaping ([DM], Error?) -> ()) {
         self.getDMs() { dms, error in
             var sortedDMs: [DM] = []

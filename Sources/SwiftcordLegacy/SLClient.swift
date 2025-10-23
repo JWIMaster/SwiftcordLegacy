@@ -8,10 +8,12 @@
 import Foundation
 import FoundationCompatKit
 
-public class SwiftcordLegacy {
-    internal let token: String
-    internal let session: URLSessionCompat
-    
+/// Swiftcord Legacy client class
+public class SLClient {
+    public let token: String
+    public let session: URLSessionCompat
+    private var gateway: Gateway?
+    public var intents: Int?
     public var clientUser: User?
     
     public var dms: [Snowflake: DM] = [:]
@@ -26,14 +28,27 @@ public class SwiftcordLegacy {
         }
     }
     
+    public func connect() {
+        self.gateway = Gateway(self, token: self.token, intents: intents!)
+        self.gateway?.start()
+    }
+    
+    public func setIntents(intents: Intents...) {
+        self.intents = 0
+        for intent in intents {
+            self.intents! += intent.rawValue
+        }
+    }
     
     public func getClientUser(completion: @escaping (User, Error?) -> ()) {
         self.request(.getClientUser) { data, error in
             if let data = data {
-                let clientUser = data as! [String: Any]
-                print(clientUser)
+                let clientUser = data as? [String: Any]
+                
+                guard let clientUser = clientUser else { return }
+                
                 self.clientUser = User(self, clientUser)
-                completion(self.clientUser!, nil)
+                completion(self.clientUser ?? User(self, clientUser), nil)
             }
         }
     }
@@ -41,8 +56,8 @@ public class SwiftcordLegacy {
     public func getDMChannels(completion: @escaping ([[String: Any]], Error?) -> ()) {
         self.request(.getDMChannels) { data, error in
             if let data = data {
-                let channelArray = data as! [[String: Any]]
-                
+                let channelArray = data as? [[String: Any]]
+                guard let channelArray = channelArray else { return }
                 completion(channelArray, nil)
             }
         }
@@ -56,8 +71,13 @@ public class SwiftcordLegacy {
             for channel in channelArray {
                 if let type = channel["type"] as? Int, type == 1 {
                     let dm = DM(self, channel)
+                    
+                    guard let dm = dm else { return }
+                    
                     self.dms[dm.id!] = dm
                 }
+                
+                
             }
             
             completion(self.dms, nil)
@@ -71,13 +91,14 @@ public class SwiftcordLegacy {
             if let data = data {
                 var messages: [Message] = []
                 
-                let messageArray = data as! [[String: Any]]
+                let messageArray = data as? [[String: Any]]
+                
+                guard let messageArray = messageArray else { return }
                 
                 for message in messageArray {
                     messages.append(Message(self, message))
                 }
                 
-                //MARK: do this so that it returns the newest ones at the bottom, as that's how messages are presented
                 completion(messages.reversed(), nil)
             }
         }

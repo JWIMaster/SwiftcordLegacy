@@ -8,7 +8,7 @@
 import Foundation
 
 public protocol Channel {
-    var swiftcordLegacy: SwiftcordLegacy? { get }
+    var slClient: SLClient? { get }
     var id: Snowflake? { get }
     var type: ChannelType { get }
 }

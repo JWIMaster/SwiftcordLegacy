@@ -12,18 +12,19 @@ public struct Message {
     
     public let id: Snowflake?
     public let author: User?
-    public let content: String?
+    public var content: String?
     public let date: Date?
     
     
-    public init(_ swiftcordLegacy: SwiftcordLegacy, _ json: [String: Any]) {
+    public init(_ slClient: SLClient, _ json: [String: Any]) {
         self.id = Snowflake(json["id"])
         
         if let authorJson = json["author"] as? [String: Any] {
-            self.author = User(swiftcordLegacy, authorJson)
+            self.author = User(slClient, authorJson)
         } else {
             self.author = nil
         }
+        
         self.content = json["content"] as? String
         self.date = json["date"] as? Date
     }
