@@ -14,6 +14,7 @@ public struct Message {
     public let author: User?
     public var content: String?
     public let date: Date?
+    public let attachments: [Attachment]
     
     
     public init(_ slClient: SLClient, _ json: [String: Any]) {
@@ -27,5 +28,11 @@ public struct Message {
         
         self.content = json["content"] as? String
         self.date = json["date"] as? Date
+        
+        if let attachmentsJson = json["attachments"] as? [[String: Any]] {
+            self.attachments = attachmentsJson.map { Attachment($0) }
+        } else {
+            self.attachments = []
+        }
     }
 }

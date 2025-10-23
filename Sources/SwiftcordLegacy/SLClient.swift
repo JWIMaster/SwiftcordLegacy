@@ -66,8 +66,6 @@ public class SLClient {
     
     public func getDMs(completion: @escaping ([Snowflake: DM], Error?) -> ()) {
         self.getDMChannels() { channelArray, error in
-            
-            
             for channel in channelArray {
                 if let type = channel["type"] as? Int, type == 1 {
                     let dm = DM(self, channel)
@@ -76,10 +74,7 @@ public class SLClient {
                     
                     self.dms[dm.id!] = dm
                 }
-                
-                
             }
-            
             completion(self.dms, nil)
         }
         
