@@ -12,3 +12,7 @@ public extension NSNotification.Name {
     static let messageDelete = NSNotification.Name("MESSAGE_DELETE")
     static let messageUpdate = NSNotification.Name("MESSAGE_UPDATE")
 }
+
+public extension Notification.Name {
+    static let gatewayDidReconnect = Notification.Name("gatewayDidReconnect")
+}

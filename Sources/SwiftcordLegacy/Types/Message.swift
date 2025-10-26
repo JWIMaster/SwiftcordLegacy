@@ -15,6 +15,7 @@ public struct Message {
     public var content: String?
     public let date: Date?
     public let attachments: [Attachment]
+    public let channelID: Snowflake?
     
     
     public init(_ slClient: SLClient, _ json: [String: Any]) {
@@ -26,6 +27,7 @@ public struct Message {
             self.author = nil
         }
         
+        self.channelID = Snowflake(json["channel_id"])
         self.content = json["content"] as? String
         self.date = json["date"] as? Date
         

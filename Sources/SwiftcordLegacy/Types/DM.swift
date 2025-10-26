@@ -7,7 +7,9 @@
 
 import Foundation
 
-public struct DM: TextChannel {
+
+
+public struct DM: DMChannel {
     public internal(set) weak var slClient: SLClient?
     
     public let id: Snowflake?

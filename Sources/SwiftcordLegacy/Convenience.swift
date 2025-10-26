@@ -8,9 +8,9 @@
 import Foundation
 
 extension SLClient {
-    public func getSortedDMs(completion: @escaping ([DM], Error?) -> ()) {
+    public func getSortedDMs(completion: @escaping ([DMChannel], Error?) -> ()) {
         self.getDMs() { dms, error in
-            var sortedDMs: [DM] = []
+            var sortedDMs: [DMChannel] = []
             
             for (_,dm) in dms {
                 sortedDMs.append(dm)

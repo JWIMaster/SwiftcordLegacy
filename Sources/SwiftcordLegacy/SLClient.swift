@@ -12,11 +12,12 @@ import FoundationCompatKit
 public class SLClient {
     public let token: String
     public let session: URLSessionCompat
-    private var gateway: Gateway?
+    public var gateway: Gateway?
     public var intents: Int?
     public var clientUser: User?
     
-    public var dms: [Snowflake: DM] = [:]
+    public var dms: [Snowflake: DMChannel] = [:]
+    
     
     public init(token: String) {
         self.token = token
@@ -64,20 +65,33 @@ public class SLClient {
         
     }
     
-    public func getDMs(completion: @escaping ([Snowflake: DM], Error?) -> ()) {
+    public func getDMs(completion: @escaping ([Snowflake: DMChannel], Error?) -> ()) {
         self.getDMChannels() { channelArray, error in
             for channel in channelArray {
-                if let type = channel["type"] as? Int, type == 1 {
+                let type = channel["type"] as? Int
+                switch type {
+                case 1:
                     let dm = DM(self, channel)
                     
                     guard let dm = dm else { return }
                     
                     self.dms[dm.id!] = dm
+                case 2:
+                    break
+                case 3:
+                    let groupDM = GroupDM(self, channel)
+                    guard let groupDM = groupDM else {
+                        return
+                    }
+                    self.dms[groupDM.id!] = groupDM
+                case 4:
+                    break
+                default:
+                    break
                 }
             }
             completion(self.dms, nil)
         }
-        
     }
     
     

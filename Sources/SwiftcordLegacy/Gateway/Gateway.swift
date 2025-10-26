@@ -5,7 +5,7 @@ import SocketRocket
 
 public typealias DispatchWorkItem = FoundationCompatKit.DispatchWorkItem
 
-class Gateway: NSObject {
+public class Gateway: NSObject {
     
     let token: String
     let intents: Int
@@ -28,6 +28,14 @@ class Gateway: NSObject {
     // Rate limits
     let globalBucket = Bucket(limit: 120, interval: 60)
     let presenceBucket = Bucket(limit: 5, interval: 60)
+    
+    // Identify cooldown
+    private var identifyCooldown = false
+    private var lastIdentifyDate: Date?
+    
+    public var onMessageCreate: ((Message) -> Void)?
+    public var onMessageUpdate: ((Message) -> Void)?
+    public var onMessageDelete: ((Message) -> Void)?
     
     init(_ slClient: SLClient, token: String, intents: Int, gatewayUrl: String = "wss://gateway.discord.gg/?encoding=json&v=9") {
         self.slClient = slClient
@@ -58,11 +66,15 @@ class Gateway: NSObject {
         awaitingHeartbeatAck = false
     }
     
-    // MARK: - Sending
+    // MARK: - Safe Send
     func send(_ payload: Payload, presence: Bool = false) {
         let item = DispatchWorkItem { [weak self] in
             guard let self = self else { return }
-            self.session?.send(payload.encode())
+            guard let session = self.session, session.readyState == .OPEN else {
+                print("[Gateway] ⚠️ Socket not open. Cannot send payload.")
+                return
+            }
+            session.send(payload.encode())
         }
         (presence ? presenceBucket : globalBucket).queue(item)
     }
@@ -79,7 +91,6 @@ class Gateway: NSObject {
     }
     
     private func sendHeartbeat() {
-        // If the last heartbeat hasn't been acknowledged, assume the connection is dead.
         if awaitingHeartbeatAck {
             print("[Gateway] ⚠️ Missed heartbeat ACK — connection likely zombied")
             closeAndReconnect(code: 4000)
@@ -99,8 +110,26 @@ class Gateway: NSObject {
         print("[Gateway] 💚 Heartbeat ACK received")
     }
     
-    // MARK: - Identify / Resume
+    // MARK: - Identify / Resume with Cooldown
     func identify() {
+        let now = Date()
+        let cooldownInterval: TimeInterval = 5 // seconds
+        
+        if identifyCooldown, let last = lastIdentifyDate {
+            let timeSinceLast = now.timeIntervalSince(last)
+            if timeSinceLast < cooldownInterval {
+                let delay = cooldownInterval - timeSinceLast + 1
+                print("[Gateway] ⏱ Identify cooldown in effect. Delaying \(delay)s")
+                DispatchQueue.global(qos: .default).asyncAfter(deadline: .now() + delay) { [weak self] in
+                    self?.identify()
+                }
+                return
+            }
+        }
+        
+        identifyCooldown = true
+        lastIdentifyDate = now
+        
         let data: [String: Any] = [
             "token": token,
             "intents": intents,
@@ -112,8 +141,14 @@ class Gateway: NSObject {
             "compress": false,
             "large_threshold": 250
         ]
+        
         send(Payload(op: 2, d: data))
         print("[Gateway] 🪪 Identify sent")
+        
+        // Reset cooldown after interval
+        DispatchQueue.global(qos: .default).asyncAfter(deadline: .now() + cooldownInterval) { [weak self] in
+            self?.identifyCooldown = false
+        }
     }
     
     func resume() {
@@ -149,11 +184,14 @@ class Gateway: NSObject {
         
         switch event {
         case .messageCreate:
-            NotificationCenter.default.post(name: .messageCreate, object: nil, userInfo: eventData)
+            let message = Message(self.slClient, eventData)
+            DispatchQueue.main.async { self.onMessageCreate?(message) }
         case .messageDelete:
-            NotificationCenter.default.post(name: .messageDelete, object: nil, userInfo: eventData)
+            let message = Message(self.slClient, eventData)
+            DispatchQueue.main.async { self.onMessageDelete?(message) }
         case .messageUpdate:
-            NotificationCenter.default.post(name: .messageUpdate, object: nil, userInfo: eventData)
+            let message = Message(self.slClient, eventData)
+            DispatchQueue.main.async { self.onMessageUpdate?(message) }
         }
     }
     
@@ -206,13 +244,13 @@ class Gateway: NSObject {
 // MARK: - SRWebSocketDelegate
 extension Gateway: SRWebSocketDelegate {
     
-    func webSocketDidOpen(_ webSocket: SRWebSocket!) {
+    public func webSocketDidOpen(_ webSocket: SRWebSocket!) {
         isConnected = true
         isReconnecting = false
         print("[Gateway] ✅ Connected to Gateway")
     }
     
-    func webSocket(_ webSocket: SRWebSocket!, didReceiveMessage message: Any!) {
+    public func webSocket(_ webSocket: SRWebSocket!, didReceiveMessage message: Any!) {
         guard let text = message as? String else {
             print("[Gateway] ⚠️ Received non-text message")
             return
@@ -225,13 +263,13 @@ extension Gateway: SRWebSocketDelegate {
         }
     }
     
-    func webSocket(_ webSocket: SRWebSocket!, didFailWithError error: Error!) {
+    public func webSocket(_ webSocket: SRWebSocket!, didFailWithError error: Error!) {
         isConnected = false
         print("[Gateway] ❌ Connection failed:", error.localizedDescription)
         reconnect()
     }
     
-    func webSocket(_ webSocket: SRWebSocket!, didCloseWithCode code: Int, reason: String!, wasClean: Bool) {
+    public func webSocket(_ webSocket: SRWebSocket!, didCloseWithCode code: Int, reason: String!, wasClean: Bool) {
         print("[Gateway] 🔴 Closed with code \(code). Reason: \(reason ?? "none")")
         if code == 4004 {
             print("[Gateway] ❌ Invalid token — check your bot token.")

@@ -25,3 +25,7 @@ public enum ChannelType: Int {
   case groupDM
   case guildCategory
 }
+
+public protocol DMChannel: TextChannel {
+    
+}
