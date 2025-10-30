@@ -17,13 +17,17 @@ public struct GroupDM: DMChannel {
     public let name: String?
     
     
-    init?(_ slClient: SLClient, _ json: [String: Any]) {
+    init?(_ slClient: SLClient, _ json: [String: Any], _ relationships: [Snowflake: (Relationship, String?)]? = nil) {
         self.slClient = slClient
         if let recipients = json["recipients"] as? [[String: Any]] {
             var users: [User] = []
             
             for recipient in recipients {
-                users.append(User(slClient, recipient))
+                let userID = Snowflake(recipient["id"] as? String)
+                
+                let relationshipInfo = relationships?[userID ?? Snowflake(0)] ?? (.unknown, nil)
+                
+                users.append(User(slClient, recipient, nickname: relationshipInfo.1, relationship: relationshipInfo.0))
             }
             self.recipients = users
         } else {

@@ -22,6 +22,12 @@ extension Endpoint {
             return (.get, "/users/@me")
         case let .sendMessage(channel):
             return (.post, "/channels/\(channel)/messages")
+        case .getRelationships:
+            return (.get, "/users/@me/relationships")
+        case let .deleteMessage(channel, message):
+            return (.delete, "/channels/\(channel)/messages/\(message)")
+        case let .editMessage(channel, message):
+            return (.patch, "/channels/\(channel)/messages/\(message)")
         }
     }
 }

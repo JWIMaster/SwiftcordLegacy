@@ -13,6 +13,9 @@ public enum Endpoint {
     case getGuilds
     case getClientUser
     case sendMessage(Snowflake)
+    case getRelationships
+    case deleteMessage(channel: Snowflake, message: Snowflake)
+    case editMessage(channel: Snowflake, message: Snowflake)
 }
 
 public enum OP: Int {
@@ -66,3 +69,11 @@ public enum Event: String {
 }
 
 
+public enum Relationship: Int {
+    case friend = 1
+    case blocked = 2
+    case pendingIncoming = 3
+    case pendingOutgoing = 4
+    case unknown = 0
+    case implicit = 5
+}
