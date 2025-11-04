@@ -278,11 +278,12 @@ public class Gateway: NSObject {
             
             for memberJson in membersArray {
                 let member = GuildMember(slClient, memberJson, guild)
-                guild.members?[member.user.id!] = member
+                guild.members[member.user.id!] = member
             }
 
             
-            if let members = guild.members, !members.isEmpty {
+            let members = guild.members
+            if !members.isEmpty {
                 DispatchQueue.main.async {
                     self.handleGuildMemberListUpdate(members)
                 }
@@ -298,14 +299,14 @@ public class Gateway: NSObject {
                         for item in items {
                             if let memberJson = item["member"] as? [String: Any] {
                                 let member = GuildMember(slClient, memberJson, guild)
-                                guild.members?[member.user.id!] = member
+                                guild.members[member.user.id!] = member
                             }
                         }
                     }
                 }
             }
-            
-            guard let members = guild.members, !members.isEmpty else { return }
+            let members = guild.members
+            guard !members.isEmpty else { return }
             DispatchQueue.main.async {
                 self.handleGuildMemberListUpdate(members)
             }

@@ -74,7 +74,7 @@ extension SLClient {
     public func getChannel(_ channelID: Snowflake, completion: @escaping (Channel?, Error?) -> ()) {
         // First, check all guilds for this channel in cache
         for (_, guild) in self.guilds {
-            if let cachedChannel = guild.channels?[channelID] {
+            if let cachedChannel = guild.channels[channelID] {
                 completion(cachedChannel, nil)
                 return
             }
@@ -99,7 +99,7 @@ extension SLClient {
                 if let guild = guildTextChannel.guild,
                    let guildID = guild.id,
                    var cachedGuild = self.guilds[guildID] {
-                    cachedGuild.channels?[guildTextChannel.id!] = guildTextChannel
+                    cachedGuild.channels[guildTextChannel.id!] = guildTextChannel
                     self.guilds[guildID] = cachedGuild
                 }
                 completion(guildTextChannel, nil)

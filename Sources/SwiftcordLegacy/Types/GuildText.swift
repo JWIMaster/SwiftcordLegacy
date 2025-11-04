@@ -26,7 +26,7 @@ public struct GuildText: GuildChannel {
     
     public var category: GuildCategory? {
         guard let parentID = parentID else { return nil }
-        return guild?.channels?[parentID] as? GuildCategory
+        return guild?.channels[parentID] as? GuildCategory
     }
     
     public init(_ slClient: SLClient, _ json: [String: Any]) {

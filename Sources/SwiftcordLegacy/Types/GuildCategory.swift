@@ -24,7 +24,7 @@ public class GuildCategory: GuildChannel {
     
     public var type: ChannelType
     
-    public var channels: [Snowflake: GuildChannel]?
+    public var channels = [Snowflake: GuildChannel]()
     
     
     public init(_ slClient: SLClient, _ json: [String: Any]) {

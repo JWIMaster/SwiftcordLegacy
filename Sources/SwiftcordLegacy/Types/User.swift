@@ -122,7 +122,7 @@ public class GuildMember: CustomStringConvertible {
             for roleIDString in roleStrings {
                 if let roleID = Snowflake(roleIDString),
                    let guild = self.guild,
-                   let role = guild.roles?[roleID] {
+                   let role = guild.roles[roleID] {
                     if self.roles == nil {
                         self.roles = []
                     }
