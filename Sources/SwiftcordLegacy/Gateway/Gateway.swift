@@ -38,12 +38,15 @@ public class Gateway: NSObject {
     public var onMessageCreate: ((Message) -> Void)?
     public var onMessageUpdate: ((Message) -> Void)?
     public var onMessageDelete: ((Message) -> Void)?
+    
+    public var onGuildMemberListUpdate: (([Snowflake: GuildMember]) -> Void)?
     let logger = LegacyLogger(fileName: "swiftcordlog.txt")
     /// Called after a reconnect so views can reattach observers
     public var onReconnect: (() -> Void)?
     
     
-    
+    private var pendingGuildSubscriptions: [(guildId: Snowflake, channelId: Snowflake   )] = []
+    private var isReady = false
     
     init(_ slClient: SLClient, token: String, intents: Int, gatewayUrl: String = "wss://gateway.discord.gg/?encoding=json&v=9") {
         self.slClient = slClient
@@ -222,7 +225,8 @@ public class Gateway: NSObject {
     // MARK: - Payload Handling
     func handlePayload(_ payload: Payload) {
         if let seq = payload.s { lastSeq = seq }
-        
+        //print("[Gateway] Event: \(payload.t ?? "nil")")
+
         switch payload.op {
         case 0: handleDispatch(payload)
         case 1, 7, 9, 10, 11: handleGateway(payload)
@@ -230,10 +234,33 @@ public class Gateway: NSObject {
         }
     }
     
+    private var guildMemberListUpdateObservers: [( [Snowflake: GuildMember] ) -> Void] = []
+    
+    public func addGuildMemberListUpdateObserver(_ observer: @escaping ([Snowflake: GuildMember]) -> Void) {
+        guildMemberListUpdateObservers.append(observer)
+    }
+    
+    // Call this when event arrives:
+    private func handleGuildMemberListUpdate(_ members: [Snowflake: GuildMember]) {
+        for observer in guildMemberListUpdateObservers {
+            observer(members)
+        }
+    }
+    
     private func handleDispatch(_ payload: Payload) {
         guard let event = Event(rawValue: payload.t!) else { return }
         guard let data = payload.d as? [String: Any] else { return }
         switch event {
+        case .ready:
+            print("READY")
+            isReady = true
+            for (guildId, channelId) in pendingGuildSubscriptions {
+                sendGuildSubscription(guildId: guildId, channelId: channelId)
+            }
+            pendingGuildSubscriptions.removeAll()
+
+        case .guildCreate:
+            print("a")
         case .messageCreate:
             let message = Message(slClient, data)
             DispatchQueue.main.async { self.onMessageCreate?(message) }
@@ -243,7 +270,110 @@ public class Gateway: NSObject {
         case .messageDelete:
             let message = Message(slClient, data)
             DispatchQueue.main.async { self.onMessageDelete?(message) }
+        case .guildMembersChunk:
+            guard let guildIdStr = data["guild_id"] as? String,
+                  let guildId = Snowflake(guildIdStr),
+                  let membersArray = data["members"] as? [[String: Any]],
+                  let guild = slClient.guilds[guildId] else { return }
+            
+            for memberJson in membersArray {
+                let member = GuildMember(slClient, memberJson, guild)
+                guild.members?[member.user.id!] = member
+            }
+
+            
+            if let members = guild.members, !members.isEmpty {
+                DispatchQueue.main.async {
+                    self.handleGuildMemberListUpdate(members)
+                }
+            }
+        case .guildMemberListUpdate:
+            let guildID = Snowflake(data["guild_id"] as? String)
+            
+            guard let guild = self.slClient.guilds[guildID!] else { return }
+            
+            if let ops = data["ops"] as? [[String: Any]] {
+                for op in ops {
+                    if let items = op["items"] as? [[String: Any]] {
+                        for item in items {
+                            if let memberJson = item["member"] as? [String: Any] {
+                                let member = GuildMember(slClient, memberJson, guild)
+                                guild.members?[member.user.id!] = member
+                            }
+                        }
+                    }
+                }
+            }
+            
+            guard let members = guild.members, !members.isEmpty else { return }
+            DispatchQueue.main.async {
+                self.handleGuildMemberListUpdate(members)
+            }
         }
+    }
+    
+    public func requestGuildMemberChunk(guildId: Snowflake, userIds: Set<Snowflake>, includePresences: Bool = false) {
+        guard !userIds.isEmpty else { return }
+        
+        // Convert user IDs to array of strings
+        let userIdsArray = userIds.map { "\($0.rawValue)" }
+        
+        // Prepare the payload data
+        let data: [String: Any] = [
+            "guild_id": [ "\(guildId.rawValue)" ],  // Discord expects array of guild IDs
+            "user_ids": userIdsArray,
+            "presences": includePresences,
+            "limit": NSNull(),  // Not used in this mode
+            "query": NSNull()   // Not used in this mode
+        ]
+        
+        // Wrap in REQUEST_GUILD_MEMBERS op
+        let payload = Payload(op: 8, d: data) // 8 = REQUEST_GUILD_MEMBERS
+        send(payload)
+        
+        print("[Gateway] Requested \(userIds.count) members from guild \(guildId.rawValue)")
+    }
+
+    
+    public func subscribeToGuildChannel(guildId: Snowflake, channelId: Snowflake) {
+        if isReady {
+            sendGuildSubscription(guildId: guildId, channelId: channelId)
+        } else {
+            pendingGuildSubscriptions.append((guildId, channelId))
+        }
+    }
+    
+    public func unsubscribeFromGuildChannel(guildId: Snowflake, channelId: Snowflake) {
+        let data: [String: Any] = [
+            "guild_id": "\(guildId.rawValue)",
+            "typing": false,
+            "threads": false,
+            "activities": false,
+            "thread_member_lists": [],
+            "members": [],
+            "channels": [
+                "\(channelId.rawValue)": []
+            ]
+        ]
+        
+        send(Payload(op: 14, d: data))
+    }
+
+
+    
+    private func sendGuildSubscription(guildId: Snowflake, channelId: Snowflake) {
+        let data: [String: Any] = [
+            "guild_id": "\(guildId.rawValue)",
+            "typing": true,
+            "threads": true,
+            "activities": true,
+            "thread_member_lists": [],
+            "members": [],
+            "channels": [
+                "\(channelId.rawValue)": [[0, 99]]
+            ]
+        ]
+        send(Payload(op: 14, d: data))
     }
     
     private func handleGateway(_ payload: Payload) {

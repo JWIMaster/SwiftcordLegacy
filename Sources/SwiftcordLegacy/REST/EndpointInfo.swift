@@ -15,7 +15,7 @@ extension Endpoint {
         case .getDMChannels:
             return(.get, "/users/@me/channels")
         case let .getMessages(channelID):
-            return(.get, "/channels/\(channelID)/messages")
+            return(.get, "/channels/\(channelID)/messages?limit=50")
         case .getGuilds:
             return (.get, "/users/@me/guilds")
         case .getClientUser:
@@ -28,6 +28,18 @@ extension Endpoint {
             return (.delete, "/channels/\(channel)/messages/\(message)")
         case let .editMessage(channel, message):
             return (.patch, "/channels/\(channel)/messages/\(message)")
+        case let .getGuildChannels(guild):
+            return (.get, "/guilds/\(guild)/channels")
+        case let .getGuild(guild):
+            return (.get, "/guilds/\(guild)")
+        case let .getGuildMember(guild, user):
+            return (.get, "/guilds/\(guild)/members/\(user)")
+        case let .getChannel(channel):
+            return (.get, "/channels/\(channel)")
+        case let .getUser(user):
+            return (.get, "/users/\(user)")
+        case let .getUserProfile(user):
+            return (.get, "/users/\(user)/profile")
         }
     }
 }

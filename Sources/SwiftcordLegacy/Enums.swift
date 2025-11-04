@@ -16,6 +16,12 @@ public enum Endpoint {
     case getRelationships
     case deleteMessage(channel: Snowflake, message: Snowflake)
     case editMessage(channel: Snowflake, message: Snowflake)
+    case getGuildChannels(guild: Snowflake)
+    case getChannel(channel: Snowflake)
+    case getGuild(guild: Snowflake)
+    case getGuildMember(guild: Snowflake, user: Snowflake)
+    case getUser(user: Snowflake)
+    case getUserProfile(user: Snowflake)
 }
 
 public enum OP: Int {
@@ -30,6 +36,7 @@ public enum OP: Int {
     case invalidSession = 9
     case hello = 10
     case heartbeatACK = 11
+    case guildSubscription = 14
 }
 
 
@@ -63,9 +70,13 @@ public enum HTTPMethod: String {
 }
 
 public enum Event: String {
+    case ready = "READY"
+    case guildCreate = "GUILD_CREATE"
     case messageCreate = "MESSAGE_CREATE"
     case messageDelete = "MESSAGE_DELETE"
     case messageUpdate = "MESSAGE_UPDATE"
+    case guildMemberListUpdate = "GUILD_MEMBER_LIST_UPDATE"
+    case guildMembersChunk = "GUILD_MEMBERS_CHUNK"
 }
 
 

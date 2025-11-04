@@ -19,7 +19,6 @@ public struct Message {
     public let edited: Bool
     public let replyMessage: ReplyMessage?
     
-    
     public init(_ slClient: SLClient, _ json: [String: Any]) {
         self.id = Snowflake(json["id"])
         
@@ -29,6 +28,7 @@ public struct Message {
             self.author = nil
         }
         
+
         self.channelID = Snowflake(json["channel_id"])
         self.content = json["content"] as? String
         self.timestamp = (json["timestamp"] as? String)?.date

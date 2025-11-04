@@ -19,13 +19,24 @@ public protocol TextChannel: Channel {
 
 
 public enum ChannelType: Int {
-  case guildText
-  case dm
-  case guildVoice
-  case groupDM
-  case guildCategory
+    case guildText = 0
+    case dm = 1
+    case guildVoice = 2
+    case groupDM = 3
+    case guildCategory = 4
+    case publicThread = 11
+    case guildForum = 15
 }
 
 public protocol DMChannel: TextChannel {
     
 }
+
+public protocol GuildChannel: TextChannel {
+    var guild: Guild? { get }
+    var name: String? { get }
+    var position: Int? { get }
+    var parentID: Snowflake? { get }
+}
+
+
