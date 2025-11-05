@@ -25,6 +25,7 @@ public enum ChannelType: Int {
     case groupDM = 3
     case guildCategory = 4
     case publicThread = 11
+    case privateThread = 12
     case guildForum = 15
 }
 

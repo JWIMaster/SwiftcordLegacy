@@ -40,13 +40,14 @@ public class Gateway: NSObject {
     public var onMessageDelete: ((Message) -> Void)?
     
     public var onGuildMemberListUpdate: (([Snowflake: GuildMember]) -> Void)?
+    public var handleThreadListSync: ((_ guildId: Snowflake) -> Void)?
     let logger = LegacyLogger(fileName: "swiftcordlog.txt")
     /// Called after a reconnect so views can reattach observers
     public var onReconnect: (() -> Void)?
     
-    
-    private var pendingGuildSubscriptions: [(guildId: Snowflake, channelId: Snowflake   )] = []
-    private var isReady = false
+    internal var guildMemberChunkObservers: [( [Snowflake: GuildMember] ) -> Void] = []
+    internal var pendingGuildSubscriptions: [(guildId: Snowflake, channelId: Snowflake   )] = []
+    internal var isReady = false
     
     init(_ slClient: SLClient, token: String, intents: Int, gatewayUrl: String = "wss://gateway.discord.gg/?encoding=json&v=9") {
         self.slClient = slClient
@@ -125,7 +126,7 @@ public class Gateway: NSObject {
         print("[Gateway] ⚠️ Missed heartbeat ACK — reconnecting...")
         closeAndReconnect(code: 4000)
     }
-
+    
     
     // MARK: - Identify / Resume
     func identify() {
@@ -226,7 +227,7 @@ public class Gateway: NSObject {
     func handlePayload(_ payload: Payload) {
         if let seq = payload.s { lastSeq = seq }
         //print("[Gateway] Event: \(payload.t ?? "nil")")
-
+        
         switch payload.op {
         case 0: handleDispatch(payload)
         case 1, 7, 9, 10, 11: handleGateway(payload)
@@ -258,7 +259,7 @@ public class Gateway: NSObject {
                 sendGuildSubscription(guildId: guildId, channelId: channelId)
             }
             pendingGuildSubscriptions.removeAll()
-
+            
         case .guildCreate:
             print("a")
         case .messageCreate:
@@ -280,12 +281,12 @@ public class Gateway: NSObject {
                 let member = GuildMember(slClient, memberJson, guild)
                 guild.members[member.user.id!] = member
             }
-
+            
             
             let members = guild.members
             if !members.isEmpty {
                 DispatchQueue.main.async {
-                    self.handleGuildMemberListUpdate(members)
+                    self.handleGuildMemberChunk(members)
                 }
             }
         case .guildMemberListUpdate:
@@ -310,31 +311,33 @@ public class Gateway: NSObject {
             DispatchQueue.main.async {
                 self.handleGuildMemberListUpdate(members)
             }
+        case .threadListSync:
+            guard let guildIdStr = data["guild_id"] as? String,
+                  let guildId = Snowflake(guildIdStr),
+                  let guild = slClient.guilds[guildId],
+                  let threadsArray = data["threads"] as? [[String: Any]] else { return }
+            
+            for threadData in threadsArray {
+                let thread = GuildThread(slClient, threadData)
+                
+                // Make sure it's assigned to the correct forum
+                if let parentId = thread.parentID,
+                   let parentForum = guild.channels[parentId] as? GuildForum {
+                    parentForum.threads[thread.id!] = thread
+                }
+            }
+            
+            // Notify UI if needed
+            DispatchQueue.main.async {
+                self.handleThreadListSync?(guildId)
+            }
+            
         }
+        
     }
     
-    public func requestGuildMemberChunk(guildId: Snowflake, userIds: Set<Snowflake>, includePresences: Bool = false) {
-        guard !userIds.isEmpty else { return }
-        
-        // Convert user IDs to array of strings
-        let userIdsArray = userIds.map { "\($0.rawValue)" }
-        
-        // Prepare the payload data
-        let data: [String: Any] = [
-            "guild_id": [ "\(guildId.rawValue)" ],  // Discord expects array of guild IDs
-            "user_ids": userIdsArray,
-            "presences": includePresences,
-            "limit": NSNull(),  // Not used in this mode
-            "query": NSNull()   // Not used in this mode
-        ]
-        
-        // Wrap in REQUEST_GUILD_MEMBERS op
-        let payload = Payload(op: 8, d: data) // 8 = REQUEST_GUILD_MEMBERS
-        send(payload)
-        
-        print("[Gateway] Requested \(userIds.count) members from guild \(guildId.rawValue)")
-    }
-
+    
+    
     
     public func subscribeToGuildChannel(guildId: Snowflake, channelId: Snowflake) {
         if isReady {
@@ -359,8 +362,8 @@ public class Gateway: NSObject {
         
         send(Payload(op: 14, d: data))
     }
-
-
+    
+    
     
     private func sendGuildSubscription(guildId: Snowflake, channelId: Snowflake) {
         let data: [String: Any] = [
@@ -426,7 +429,7 @@ public class Gateway: NSObject {
             self?.onReconnect?()
         }
     }
-
+    
     
     func reconnect() {
         closeAndReconnect(code: 4000)
@@ -434,38 +437,3 @@ public class Gateway: NSObject {
     
 }
 
-// MARK: - SRWebSocketDelegate
-extension Gateway: SRWebSocketDelegate {
-    
-    public func webSocketDidOpen(_ webSocket: SRWebSocket!) {
-        isConnected = true
-        isReconnecting = false
-        print("[Gateway] ✅ Connected")
-    }
-    
-    public func webSocket(_ webSocket: SRWebSocket!, didReceiveMessage message: Any!) {
-        guard let text = message as? String else { return }
-        DispatchQueue.global(qos: .userInteractive).async { [self] in
-            let payload = Payload(with: text)
-            self.handlePayload(payload)
-        }
-    }
-    
-    public func webSocket(_ webSocket: SRWebSocket!, didFailWithError error: Error!) {
-        isConnected = false
-        print("[Gateway] ❌ Connection failed:", error.localizedDescription)
-        reconnect()
-    }
-    
-    public func webSocket(_ webSocket: SRWebSocket!, didCloseWithCode code: Int, reason: String!, wasClean: Bool) {
-        print("[Gateway] 🔴 Closed with code \(code), reason: \(reason ?? "none")")
-        if code == 4004 {
-            print("[Gateway] ❌ Invalid token")
-        } else if !isReconnecting {
-            isReconnecting = true
-            reconnect()
-        }
-    }
-
-
-}

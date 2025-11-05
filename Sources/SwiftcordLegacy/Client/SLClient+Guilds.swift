@@ -130,6 +130,16 @@ extension SLClient {
                        let parentCategory = guild.channels[parentID] as? GuildCategory {
                         parentCategory.channels[textChannel.id!] = textChannel
                     }
+                case .guildForum:
+                    let guildForum = GuildForum(self, channelData)
+                    channels.append(guildForum)
+                    guild.channels[guildForum.id!] = guildForum
+                    
+                    // Assign to parent category if exists
+                    if let parentID = guildForum.parentID,
+                       let parentCategory = guild.channels[parentID] as? GuildCategory {
+                        parentCategory.channels[guildForum.id!] = guildForum
+                    }
                 default: break
                 }
             }
@@ -137,7 +147,7 @@ extension SLClient {
             completion(channels, nil)
         }
     }
-
+    
     
     public func getGuildChannels(for guild: Guild, completion: @escaping ([GuildChannel], Error?) -> ()) {
         guard let guildID = guild.id else { return }
@@ -146,3 +156,10 @@ extension SLClient {
         }
     }
 }
+
+extension SLClient {
+    public func getForumThreads(for forum: GuildForum, completion: @escaping ([GuildThread]) -> ()) {
+        completion(Array(forum.threads.values))
+    }
+}
+

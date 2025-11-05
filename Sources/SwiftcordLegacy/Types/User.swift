@@ -88,7 +88,7 @@ public class PlaceholderUser: User {
 }
 
 
-public class GuildMember: CustomStringConvertible {
+public struct GuildMember: CustomStringConvertible {
     public var user: User
     public var guildNickname: String?
     public var roles: [Role]?
@@ -99,13 +99,15 @@ public class GuildMember: CustomStringConvertible {
     }
     
     public var topRoleColor: Role? {
+        guard let guild = self.guild else { return nil }
         return roles?
-            .filter { role in
-                let color = role.color
-                return !(UIColor(red: 0, green: 0, blue: 0, alpha: 1) == color)
+            .compactMap { role in
+                // Only use roles that actually exist in the member's guild
+                guild.roles[role.id].flatMap { $0.color != UIColor.black ? $0 : nil }
             }
             .max(by: { $0.position < $1.position })
     }
+
 
     
     public init(_ slClient: SLClient, _ json: [String: Any], _ guild: Guild) {
