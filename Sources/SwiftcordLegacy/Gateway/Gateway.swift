@@ -10,7 +10,6 @@ public typealias DispatchWorkItem = FoundationCompatKit.DispatchWorkItem
 public class Gateway: NSObject {
     
     let token: String
-    let intents: Int
     var session: SRWebSocket?
     var isConnected = false
     var isReconnecting = false
@@ -49,10 +48,9 @@ public class Gateway: NSObject {
     internal var pendingGuildSubscriptions: [(guildId: Snowflake, channelId: Snowflake   )] = []
     internal var isReady = false
     
-    init(_ slClient: SLClient, token: String, intents: Int, gatewayUrl: String = "wss://gateway.discord.gg/?encoding=json&v=9") {
+    init(_ slClient: SLClient, token: String, gatewayUrl: String = "wss://gateway.discord.gg/?encoding=json&v=9") {
         self.slClient = slClient
         self.token = token
-        self.intents = intents
         self.gatewayUrl = gatewayUrl
     }
     

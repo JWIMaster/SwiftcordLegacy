@@ -13,7 +13,6 @@ public class SLClient {
     public let token: String
     public let session: URLSessionCompat
     public var gateway: Gateway?
-    public var intents: Int?
     public var clientUser: ClientUser?
     
     public var dms: [Snowflake: DMChannel] = [:]
@@ -35,17 +34,11 @@ public class SLClient {
     }
     
     public func connect() {
-        self.gateway = Gateway(self, token: self.token, intents: intents!)
+        self.gateway = Gateway(self, token: self.token)
         self.gateway?.start()
         
     }
     
-    public func setIntents(intents: Intents...) {
-        self.intents = 0
-        for intent in intents {
-            self.intents! += intent.rawValue
-        }
-    }
     
     
     public func getUser(withID userID: Snowflake, completion: @escaping (User, Error?) -> ()) {
