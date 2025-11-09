@@ -9,7 +9,7 @@ import Foundation
 import UIKit
 
 
-public class User: Equatable, CustomStringConvertible {
+public class User: Equatable, CustomStringConvertible, DictionaryConvertible {
     public static func == (lhs: User, rhs: User) -> Bool {
         return lhs.id == rhs.id
     }
@@ -50,6 +50,18 @@ public class User: Equatable, CustomStringConvertible {
             )
             """
     }
+    
+    public func convertToDict() -> [String : Any] {
+        return [
+            "id": self.id?.description ?? "",
+            "username": self.username ?? "",
+            "global_name": self.displayname ?? NSNull(),
+            "discriminator": self.discriminator ?? "",
+            "nickname": self.nickname ?? NSNull(),
+            "relationship": self.relationship?.rawValue ?? 0,
+            "avatar": self.avatarString ?? NSNull()
+        ]
+    }
 }
 
 public struct UserProfile {
@@ -88,7 +100,7 @@ public class PlaceholderUser: User {
 }
 
 
-public struct GuildMember: CustomStringConvertible {
+public struct GuildMember: CustomStringConvertible, DictionaryConvertible {
     public var user: User
     public var guildNickname: String?
     public var roles: [Role]?
@@ -143,5 +155,12 @@ public struct GuildMember: CustomStringConvertible {
                 guildNickname: \(guildNickname)
             )
         """
+    }
+    
+    public func convertToDict() -> [String : Any] {
+        return [
+            "id": self.user.id?.description,
+            "nickname": self.guildNickname ?? NSNull()
+        ]
     }
 }

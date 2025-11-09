@@ -1,6 +1,6 @@
 import Foundation
 
-public struct Snowflake: Comparable, Hashable, CustomStringConvertible {
+public struct Snowflake: Comparable, Hashable, CustomStringConvertible, Codable {
     public let rawValue: UInt64
     
     public var description: String { "\(rawValue)" }
@@ -44,5 +44,21 @@ public struct Snowflake: Comparable, Hashable, CustomStringConvertible {
     // Hashable
     public func hash(into hasher: inout Hasher) {
         hasher.combine(rawValue)
+    }
+    
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        // Decode as string (Discord-style)
+        let stringValue = try container.decode(String.self)
+        guard let value = UInt64(stringValue) else {
+            throw DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid Snowflake string")
+        }
+        self.rawValue = value
+    }
+    
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        // Encode as string
+        try container.encode("\(rawValue)")
     }
 }

@@ -8,6 +8,42 @@
 import Foundation
 import FoundationCompatKit
 
+import Foundation
+
+extension Data {
+    init?(base64EncodedLegacy string: String) {
+        let cleanedString = string
+            .replacingOccurrences(of: "\r", with: "")
+            .replacingOccurrences(of: "\n", with: "")
+            .replacingOccurrences(of: " ", with: "")
+        
+        let base64Table = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+        var decodedBytes = [UInt8]()
+        var buffer: UInt32 = 0
+        var bufferLength = 0
+        
+        for char in cleanedString {
+            if let index = base64Table.firstIndex(of: char) {
+                let value = UInt32(base64Table.distance(from: base64Table.startIndex, to: index))
+                buffer = (buffer << 6) | value
+                bufferLength += 6
+                if bufferLength >= 8 {
+                    bufferLength -= 8
+                    let byte = UInt8((buffer >> bufferLength) & 0xFF)
+                    decodedBytes.append(byte)
+                }
+            } else if char == "=" {
+                break
+            } else {
+                continue
+            }
+        }
+        
+        self.init(bytes: decodedBytes, count: decodedBytes.count)
+    }
+}
+
+
 /// Swiftcord Legacy client class
 public class SLClient {
     public let token: String
@@ -20,6 +56,18 @@ public class SLClient {
     
     public let logger = LegacyLogger(fileName: "rest logs")
     
+    public var clientUserSettings: UserSettings?
+    
+    public var relationships: [Snowflake: (Relationship, String?)] = [:]
+    
+    public lazy var sortedDMs: [DMChannel] = dms.values.sorted { dm1, dm2 in
+        let id1 = dm1.lastMessageID?.rawValue ?? 0
+        let id2 = dm2.lastMessageID?.rawValue ?? 0
+        return id1 > id2
+    }
+    
+    public var onReady: (() -> Void)?
+
     
     public init(token: String) {
         self.token = token
@@ -38,6 +86,111 @@ public class SLClient {
         self.gateway?.start()
         
     }
+    
+    
+    public func handleReady(_ data: [String: Any]) {
+        // User
+        logger.log("trying to parse the ready payload")
+        if let userData = data["user"] as? [String: Any] {
+            self.clientUser = ClientUser(self, userData)
+        }
+        
+        // User settings
+        autoreleasepool {
+            if let base64String = data["user_settings_proto"] as? String,
+               let decodedData = Data(base64EncodedLegacy: base64String),
+               let jsonObject = try? JSONSerialization.jsonObject(with: decodedData) as? [String: Any] {
+                self.clientUserSettings = UserSettings(self, jsonObject)
+            } else if let settingsData = data["user_settings"] as? [String: Any] {
+                self.clientUserSettings = UserSettings(self, settingsData)
+            }
+        }
+        
+        
+        
+        // Relationships
+        autoreleasepool {
+            if let relationshipsArray = data["relationships"] as? [[String: Any]] {
+                var rels: [Snowflake: (Relationship, String?)] = [:]
+                for r in relationshipsArray {
+                    if let id = r["id"] as? String, let type = r["type"] as? Int {
+                        let userID = Snowflake(id)!
+                        let relType = Relationship(rawValue: type) ?? .unknown
+                        let nickname = r["nickname"] as? String
+                        rels[userID] = (relType, nickname)
+                    }
+                }
+                // Store locally
+                self.relationships = rels
+            }
+        }
+        
+        
+        // 1. Build a dictionary of users from the ready payload
+        var users: [String: [String: Any]] = [:]
+        autoreleasepool {
+            if let usersArray = data["users"] as? [[String: Any]] {
+                for userJSON in usersArray {
+                    if let id = userJSON["id"] as? String {
+                        users[id] = userJSON
+                    }
+                }
+            }
+        }
+        
+
+        // 2. Populate private channels (DMs and Group DMs)
+        autoreleasepool {
+            if let privateChannels = data["private_channels"] as? [[String: Any]] {
+                for channel in privateChannels {
+                    guard let type = channel["type"] as? Int else { continue }
+
+                    switch type {
+                    case 1: // DM
+                        // Get the recipient JSON by matching recipient_ids
+                        var channelJSON = channel
+                        if let recipientIDs = channel["recipient_ids"] as? [String] {
+                            let recipientsJSON = recipientIDs.compactMap { users[$0] }
+                            channelJSON["recipients"] = recipientsJSON
+                        }
+
+                        if var dm = DM(self, channelJSON, relationships) {
+                            // Assign first recipient as the DM recipient
+                            self.dms[dm.id!] = dm
+                        }
+
+                    case 3: // Group DM
+                        if let groupDM = GroupDM(self, channel) {
+                            self.dms[groupDM.id!] = groupDM
+                        }
+
+                    default:
+                        break
+                    }
+                }
+            }
+        }
+        
+        
+        
+        // Guilds & members
+        autoreleasepool {
+            if let guildsArray = data["guilds"] as? [[String: Any]] {
+                for guildData in guildsArray {
+                    let guild = Guild(self, guildData)
+                    self.guilds[(guild?.id)!] = guild
+                }
+            }
+        }
+        
+        DispatchQueue.main.async {
+            self.saveCache()
+            self.onReady?()
+
+        }
+    }
+    
+    
     
     
     
@@ -63,7 +216,7 @@ public class SLClient {
             completion(user, userProfile, nil)
         }
     }
-
+    
     
     public func getClientUser(completion: @escaping (ClientUser, Error?) -> ()) {
         self.request(.getClientUser) { data, error in
@@ -96,7 +249,16 @@ public class SLClient {
             
             completion(relationships, nil)
         }
-    }    
+    }
+    
+    public func getClientUserSettings(completion: @escaping (UserSettings, Error?) -> ()) {
+        self.request(.getUserSettings) { settings, error in
+            guard let settingsJson = settings as? [String: Any] else { return }
+            let userSettings = UserSettings(self, settingsJson)
+            self.clientUserSettings = userSettings
+            completion(userSettings, nil)
+        }
+    }
 }
 
 

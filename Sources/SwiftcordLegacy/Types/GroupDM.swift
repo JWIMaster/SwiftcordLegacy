@@ -41,4 +41,14 @@ public struct GroupDM: DMChannel {
         
         self.lastMessageID = Snowflake(json["last_message_id"] as? String)
     }
+    
+    public func convertToDict() -> [String: Any] {
+        return [
+            "id": self.id?.description,
+            "name": self.name ?? "",
+            "last_message_id": self.lastMessageID?.description ?? "",
+            "type": self.type.rawValue,
+            "recipients": self.recipients?.map { $0.convertToDict() } ?? []
+        ]
+    }
 }

@@ -40,6 +40,8 @@ extension Endpoint {
             return (.get, "/users/\(user)")
         case let .getUserProfile(user):
             return (.get, "/users/\(user)/profile")
+        case .getUserSettings:
+            return (.get, "/users/@me/settings")
         }
     }
 }

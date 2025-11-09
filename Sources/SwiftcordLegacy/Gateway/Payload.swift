@@ -7,12 +7,11 @@
 
 import Foundation
 
-//MARK: Don't know, ChatGPT, need to revise
 struct Payload {
-    let op: Int
-    let d: Any
-    let t: String?
-    let s: Int?
+    var op: Int
+    var d: Any
+    var t: String?
+    var s: Int?
     
     init(op: Int, d: Any, t: String? = nil, s: Int? = nil) {
         self.op = op

@@ -38,6 +38,17 @@ public class GuildForum: GuildChannel {
             self.guild = guild
         }
     }
+    
+    public func convertToDict() -> [String: Any] {
+        return [
+            "id": self.id?.description,
+            "name": self.name ?? "",
+            "type": self.type.rawValue,
+            "parent_id": self.parentID?.rawValue ?? NSNull(),
+            "position": self.position ?? NSNull(),
+            "last_message_id": self.lastMessageID?.rawValue ?? NSNull()
+        ]
+    }
 }
 
 

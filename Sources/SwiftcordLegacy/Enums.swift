@@ -22,6 +22,7 @@ public enum Endpoint {
     case getGuildMember(guild: Snowflake, user: Snowflake)
     case getUser(user: Snowflake)
     case getUserProfile(user: Snowflake)
+    case getUserSettings
 }
 
 public enum OP: Int {
@@ -81,7 +82,7 @@ public enum Event: String {
 }
 
 
-public enum Relationship: Int {
+public enum Relationship: Int, Codable {
     case friend = 1
     case blocked = 2
     case pendingIncoming = 3

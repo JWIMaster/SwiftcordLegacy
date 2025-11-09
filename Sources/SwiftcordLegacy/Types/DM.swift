@@ -13,9 +13,10 @@ public struct DM: DMChannel {
     public internal(set) weak var slClient: SLClient?
     
     public let id: Snowflake?
-    public let recipient: User?
+    public var recipient: User?
     public let lastMessageID: Snowflake?
     public let type = ChannelType.dm
+    
     
     
     init?(_ slClient: SLClient, _ json: [String: Any], _ relationships: [Snowflake: (Relationship, String?)]? = nil) {
@@ -36,5 +37,14 @@ public struct DM: DMChannel {
         self.id = Snowflake(json["id"] as? String)
         
         self.lastMessageID = Snowflake(json["last_message_id"] as? String)
+    }
+    
+    public func convertToDict() -> [String: Any] {
+        return [
+            "id": id?.description ?? "",
+            "last_message_id": lastMessageID?.description ?? "",
+            "type": type.rawValue,
+            "recipients": [recipient?.convertToDict()]
+        ]
     }
 }

@@ -8,7 +8,7 @@
 import Foundation
 import UIKit
 
-public struct Role {
+public struct Role: DictionaryConvertible {
     public let color: UIColor
     public let id: Snowflake
     public let isHoisted: Bool
@@ -29,6 +29,18 @@ public struct Role {
         self.position = json["position"] as! Int
     }
     
+    public func convertToDict() -> [String : Any] {
+        return [
+            "id": self.id.description,
+            "name": self.name,
+            "color": self.color.argbInt ?? 0, // store as Int
+            "hoist": self.isHoisted,
+            "managed": self.isManaged,
+            "mentionable": self.isMentionable,
+            "permissions": self.permissions ?? NSNull(),
+            "position": self.position
+        ]
+    }
 }
 
 public extension UIColor {

@@ -7,6 +7,7 @@
 
 import Foundation
 import SocketRocket
+import FoundationCompatKit
 
 // MARK: - SRWebSocketDelegate
 extension Gateway: SRWebSocketDelegate {

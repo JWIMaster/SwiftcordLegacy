@@ -34,6 +34,10 @@ public class GuildCategory: GuildChannel {
         self.name = json["name"] as? String
         self.parentID = Snowflake(json["parent_id"] as? String)
     }
+    
+    public func convertToDict() -> [String : Any] {
+        return [:]
+    }
 }
 
 extension GuildCategory: Hashable {

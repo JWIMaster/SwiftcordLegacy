@@ -7,7 +7,11 @@
 
 import Foundation
 
-public protocol Channel {
+public protocol DictionaryConvertible {
+    func convertToDict() -> [String: Any]
+}
+
+public protocol Channel: DictionaryConvertible {
     var slClient: SLClient? { get }
     var id: Snowflake? { get }
     var type: ChannelType { get }

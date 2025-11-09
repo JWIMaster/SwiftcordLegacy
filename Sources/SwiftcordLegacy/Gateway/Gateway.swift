@@ -56,6 +56,7 @@ public class Gateway: NSObject {
     
     // MARK: - Connection
     func start() {
+        logger.log("began connection")
         guard let url = URL(string: gatewayUrl) else {
             print("[Gateway] Bad URL: \(gatewayUrl)")
             return
@@ -186,19 +187,13 @@ public class Gateway: NSObject {
                 "client_build_number": 197575
             ],
             "compress": false,
-            "large_threshold": 250,
-            "presence": [
-                "status": "online",
-                "since": nil,
-                "afk": false,
-                "activities": [
-                ]
-            ],
-            "capabilities": 157,
+            "large_threshold": 50,
+            "capabilities": 8209,
             "client_state": [:]
         ]
         send(Payload(op: 2, d: data))
         print("[Gateway] 🪪 Identify sent")
+        logger.log("identify sent")
         
         DispatchQueue.global(qos: .default).asyncAfter(deadline: .now() + cooldownInterval) { [weak self] in
             self?.identifyCooldown = false
@@ -225,12 +220,11 @@ public class Gateway: NSObject {
     func handlePayload(_ payload: Payload) {
         if let seq = payload.s { lastSeq = seq }
         //print("[Gateway] Event: \(payload.t ?? "nil")")
-        
         switch payload.op {
         case 0: handleDispatch(payload)
         case 1, 7, 9, 10, 11: handleGateway(payload)
         default: logger.log("[Gateway] Unknown OP: \(payload.op)")
-        }
+        } 
     }
     
     private var guildMemberListUpdateObservers: [( [Snowflake: GuildMember] ) -> Void] = []
@@ -249,9 +243,14 @@ public class Gateway: NSObject {
     private func handleDispatch(_ payload: Payload) {
         guard let event = Event(rawValue: payload.t!) else { return }
         guard let data = payload.d as? [String: Any] else { return }
+        
         switch event {
         case .ready:
             print("READY")
+            logger.log("recieved ready")
+            autoreleasepool {
+                //self.slClient.handleReady(data)
+            }
             isReady = true
             for (guildId, channelId) in pendingGuildSubscriptions {
                 sendGuildSubscription(guildId: guildId, channelId: channelId)
@@ -259,7 +258,7 @@ public class Gateway: NSObject {
             pendingGuildSubscriptions.removeAll()
             
         case .guildCreate:
-            print("a")
+            break
         case .messageCreate:
             let message = Message(slClient, data)
             DispatchQueue.main.async { self.onMessageCreate?(message) }
