@@ -70,9 +70,9 @@ extension SLClient {
             let guildData = data as? [String: Any]
             guard let guildData = guildData else { return }
             let guild = Guild(self, guildData)
-            guild?.fullGuild = true
             let guildID = guild?.id
             guard let guild = guild, let guildID = guildID else { return }
+            guild.fullGuild = true
             let guildDict: [Snowflake: Guild] = [guildID: guild]
             self.guilds.merge(guildDict) { _, new in new }
             completion(guildDict, nil)

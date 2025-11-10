@@ -39,7 +39,7 @@ public class CacheManager {
 
     private var filePath: String {
         let dirs = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)
-        let dir = dirs.first ?? NSTemporaryDirectory()
+        let dir = dirs.first!
         return dir + "/" + fileName
     }
 
@@ -49,7 +49,8 @@ public class CacheManager {
 
         // DMs
         var dmDict: [String: [String: Any]] = [:]
-        for (id, dmChannel) in client.dms {
+        let dmsCopy = client.dms
+        for (id, dmChannel) in dmsCopy {
             // DM
             if let dm = dmChannel as? DM {
                 dmDict[id.description] = dm.convertToDict()
@@ -66,7 +67,8 @@ public class CacheManager {
         // Guilds
         // MARK: - Save Guilds with Members and Channels
         var guildDict: [String: [String: Any]] = [:]
-        for (id, guild) in client.guilds {
+        let guildsCopy = client.guilds
+        for (id, guild) in guildsCopy {
             guildDict[id.description] = guild.convertToDict()
         }
         cacheDict["guilds"] = guildDict
@@ -74,7 +76,8 @@ public class CacheManager {
 
         // Relationships
         var relDict: [String: [String: Any]] = [:]
-        for (id, (rel, nickname)) in client.relationships {
+        let relCopy = client.relationships
+        for (id, (rel, nickname)) in relCopy {
             relDict[id.description] = [
                 "type": rel.rawValue,
                 "nickname": nickname ?? NSNull()
@@ -88,11 +91,11 @@ public class CacheManager {
             guard let guildFolders = settings.guildFolders else { return }
             for folder in guildFolders {
                 let folderDict: [String: Any] = [
-                    "id": folder.id?.description ?? "",
+                    "id": folder.id ?? 0,
                     "name": folder.name ?? "",
-                    "guildIDs": folder.guildIDs?.map { $0.description } ?? [],
+                    "guild_ids": folder.guildIDs?.map { $0.description } ?? [],
                     "opened": folder.opened ?? false,
-                    //"color": folder.color?.hexString ?? "" // store as hex string
+                    //"color": folder.color?.argbInt ?? "" // store as hex string
                 ]
                 foldersArray.append(folderDict)
             }
@@ -125,53 +128,44 @@ public class CacheManager {
         }
 
         // MARK: 1. Load Relationships first
-        autoreleasepool {
-            if let cachedRelationships = json["relationships"] as? [String: [String: Any]] {
-                var rels: [Snowflake: (Relationship, String?)] = [:]
-                for (id, dict) in cachedRelationships {
-                    if let typeRaw = dict["type"] as? Int {
-                        let relType = Relationship(rawValue: typeRaw) ?? .unknown
-                        let nickname = dict["nickname"] as? String
-                        rels[Snowflake(id)!] = (relType, nickname)
-                    }
+        if let cachedRelationships = json["relationships"] as? [String: [String: Any]] {
+            var rels: [Snowflake: (Relationship, String?)] = [:]
+            for (id, dict) in cachedRelationships {
+                if let typeRaw = dict["type"] as? Int {
+                    let relType = Relationship(rawValue: typeRaw) ?? .unknown
+                    let nickname = dict["nickname"] as? String
+                    rels[Snowflake(id)!] = (relType, nickname)
                 }
-                client.relationships = rels
             }
+            client.relationships = rels
         }
-
         // MARK: 2. Load User Settings
-        autoreleasepool {
-            if let settingsJSON = json["userSettings"] as? [String: Any] {
-                client.clientUserSettings = UserSettings(client, settingsJSON)
-            }
+        if let settingsJSON = json["userSettings"] as? [String: Any] {
+            client.clientUserSettings = UserSettings(client, settingsJSON)
         }
 
         // MARK: 3. Load Guilds
-        autoreleasepool {
-            if let cachedGuilds = json["guilds"] as? [String: [String: Any]] {
-                for (id, guildJSON) in cachedGuilds {
-                    let guild = Guild(client, guildJSON)
-                    client.guilds[Snowflake(id)!] = guild
-                }
+        if let cachedGuilds = json["guilds"] as? [String: [String: Any]] {
+            for (id, guildJSON) in cachedGuilds {
+                let guild = Guild(client, guildJSON)
+                client.guilds[Snowflake(id)!] = guild
             }
         }
-
+        
         // MARK: 4. Load DMs (requires relationships to exist)
-        autoreleasepool {
-            if let cachedDMs = json["dms"] as? [String: [String: Any]] {
-                for (id, dmJSON) in cachedDMs {
-                    guard let recipients = dmJSON["recipients"] as? [[String: Any]], !recipients.isEmpty else {
-                        client.logger.log("Skipping DM \(id) with no recipients")
-                        continue
-                    }
+        if let cachedDMs = json["dms"] as? [String: [String: Any]] {
+            for (id, dmJSON) in cachedDMs {
+                guard let recipients = dmJSON["recipients"] as? [[String: Any]], !recipients.isEmpty else {
+                    client.logger.log("Skipping DM \(id) with no recipients")
+                    continue
+                }
 
-                    if let dm = DM(client, dmJSON, client.relationships) {
-                        client.dms[Snowflake(id)!] = dm
-                    } else if let gdm = GroupDM(client, dmJSON, client.relationships) {
-                        client.dms[Snowflake(id)!] = gdm
-                    } else {
-                        client.logger.log("Failed to load DM \(id)")
-                    }
+                if let dm = DM(client, dmJSON, client.relationships) {
+                    client.dms[Snowflake(id)!] = dm
+                } else if let gdm = GroupDM(client, dmJSON, client.relationships) {
+                    client.dms[Snowflake(id)!] = gdm
+                } else {
+                    client.logger.log("Failed to load DM \(id)")
                 }
             }
         }
@@ -208,11 +202,9 @@ extension SLClient {
     }
 
     public func loadCache(_ completion: @escaping () -> ()) {
-        DispatchQueue.global(qos: .userInitiated).async {
+        DispatchQueue.main.async {
             self.cacheManager.load(client: self)
-            DispatchQueue.main.async {
-                completion()
-            }
+            completion()
         }
     }
     

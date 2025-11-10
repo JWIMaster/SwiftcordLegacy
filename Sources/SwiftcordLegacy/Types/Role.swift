@@ -33,7 +33,7 @@ public struct Role: DictionaryConvertible {
         return [
             "id": self.id.description,
             "name": self.name,
-            "color": self.color.argbInt ?? 0, // store as Int
+            "color": self.color.argbInt,
             "hoist": self.isHoisted,
             "managed": self.isManaged,
             "mentionable": self.isMentionable,

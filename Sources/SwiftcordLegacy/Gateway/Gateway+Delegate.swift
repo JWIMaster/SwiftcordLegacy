@@ -20,7 +20,7 @@ extension Gateway: SRWebSocketDelegate {
     
     public func webSocket(_ webSocket: SRWebSocket!, didReceiveMessage message: Any!) {
         guard let text = message as? String else { return }
-        DispatchQueue.global(qos: .userInteractive).async { [self] in
+        DispatchQueue.global(qos: .userInitiated).async { [self] in
             let payload = Payload(with: text)
             self.handlePayload(payload)
         }

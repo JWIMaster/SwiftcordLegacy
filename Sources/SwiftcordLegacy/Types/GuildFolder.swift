@@ -9,14 +9,14 @@ import Foundation
 import UIKit
 
 public class GuildFolder {
-    public var id: Snowflake?
+    public var id: Int?
     public var name: String?
     public var guildIDs: [Snowflake]?
     public var opened: Bool?
     public var color: UIColor?
     
     public init(_ slClient: SLClient, _ json: [String: Any]) {
-        self.id = Snowflake(json["id"] as? String)
+        self.id = json["id"] as? Int
         self.name = json["name"] as? String
         
         if let guildIDStrings = (json["guild_ids"] as? [String]) {

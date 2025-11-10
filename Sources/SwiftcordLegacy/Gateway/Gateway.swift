@@ -48,6 +48,11 @@ public class Gateway: NSObject {
     internal var pendingGuildSubscriptions: [(guildId: Snowflake, channelId: Snowflake   )] = []
     internal var isReady = false
     
+    let payloadQueue = DispatchQueue(label: "com.swiftcord.payloadQueue")
+    var didHandleReady = false
+    let readyLock = NSLock()
+
+    
     init(_ slClient: SLClient, token: String, gatewayUrl: String = "wss://gateway.discord.gg/?encoding=json&v=9") {
         self.slClient = slClient
         self.token = token
@@ -219,7 +224,7 @@ public class Gateway: NSObject {
     // MARK: - Payload Handling
     func handlePayload(_ payload: Payload) {
         if let seq = payload.s { lastSeq = seq }
-        //print("[Gateway] Event: \(payload.t ?? "nil")")
+        logger.log("[Gateway] Event: \(payload.t ?? "nil")")
         switch payload.op {
         case 0: handleDispatch(payload)
         case 1, 7, 9, 10, 11: handleGateway(payload)
@@ -248,9 +253,13 @@ public class Gateway: NSObject {
         case .ready:
             print("READY")
             logger.log("recieved ready")
+            DispatchQueue.main.async {
+                //self.slClient.onReady?()
+            }
             autoreleasepool {
                 //self.slClient.handleReady(data)
             }
+            
             isReady = true
             for (guildId, channelId) in pendingGuildSubscriptions {
                 sendGuildSubscription(guildId: guildId, channelId: channelId)

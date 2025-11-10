@@ -1,6 +1,6 @@
 import Foundation
 
-public class Guild: DictionaryConvertible {
+public class Guild: DictionaryConvertible, CustomStringConvertible {
     public let id: Snowflake?
     public let name: String?
     public let icon: String?
@@ -21,10 +21,10 @@ public class Guild: DictionaryConvertible {
                 self.roles[role.id] = role
             }
         }
-        if !channels.isEmpty && !roles.isEmpty {
-            self.fullGuild = true
-        }
     }
+    public var description: String {
+            return "Guild(id: \(id?.description ?? "nil"), name: \(name ?? "nil"), icon: \(icon ?? "nil"), roles: \(roles.count), members: \(members.count), channels: \(channels.count), fullGuild: \(fullGuild))"
+        }
     
     public func convertToDict() -> [String: Any] {
         return [

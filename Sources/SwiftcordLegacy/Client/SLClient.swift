@@ -82,6 +82,10 @@ public class SLClient {
     }
     
     public func connect() {
+        if var gateway = gateway {
+            gateway.stop()
+
+        }
         self.gateway = Gateway(self, token: self.token)
         self.gateway?.start()
         
@@ -184,9 +188,8 @@ public class SLClient {
         }
         
         DispatchQueue.main.async {
-            self.saveCache()
+            //self.saveCache()
             self.onReady?()
-
         }
     }
     
@@ -246,7 +249,7 @@ public class SLClient {
                     relationships[userID] = (type, nickname)
                 }
             }
-            
+            self.relationships = relationships
             completion(relationships, nil)
         }
     }
