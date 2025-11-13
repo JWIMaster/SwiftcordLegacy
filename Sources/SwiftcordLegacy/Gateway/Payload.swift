@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import iOS6BarFix
+import NSJSONSerializationForSwift
 
 struct Payload {
     var op: Int

@@ -1,7 +1,9 @@
 import Foundation
 import UIKit
-import iOS6BarFix
+import NSJSONSerializationForSwift
+import FoundationCompatKit
 
+// MARK: - UIColor ARGB Conversion
 public extension UIColor {
     var argbInt: Int {
         var r: CGFloat = 0
@@ -28,11 +30,11 @@ public extension UIColor {
 }
 
 
-
-
+// MARK: - Cache Manager
 public class CacheManager {
 
     private let fileName: String
+    private static let cacheQueue = DispatchQueue(label: "com.slclient.cacheQueue")
 
     public init(fileName: String = "SLClientCache.json") {
         self.fileName = fileName
@@ -43,45 +45,38 @@ public class CacheManager {
         let dir = dirs.first!
         return dir + "/" + fileName
     }
-    
-    private static let cacheQueue = DispatchQueue(label: "com.slclient.cacheQueue", attributes: .concurrent)
 
-
+    // MARK: - Save
     public func save(client: SLClient) {
-        CacheManager.cacheQueue.async { [weak self] in
-            guard let self = self else { return }
+        Self.cacheQueue.async {
             var cacheDict: [String: Any] = [:]
+
+            // Snapshot copies to avoid concurrent mutation
+            let dmsCopy = client.dms
+            let guildsCopy = client.guilds
+            let relCopy = client.relationships
+            let settingsCopy = client.clientUserSettings
 
             // DMs
             var dmDict: [String: [String: Any]] = [:]
-            let dmsCopy = client.dms
             for (id, dmChannel) in dmsCopy {
-                // DM
                 if let dm = dmChannel as? DM {
                     dmDict[id.description] = dm.convertToDict()
-                }
-
-                // GroupDM
-                if let gdm = dmChannel as? GroupDM {
+                } else if let gdm = dmChannel as? GroupDM {
                     dmDict[id.description] = gdm.convertToDict()
                 }
-
             }
             cacheDict["dms"] = dmDict
 
             // Guilds
-            // MARK: - Save Guilds with Members and Channels
             var guildDict: [String: [String: Any]] = [:]
-            let guildsCopy = client.guilds
             for (id, guild) in guildsCopy {
                 guildDict[id.description] = guild.convertToDict()
             }
             cacheDict["guilds"] = guildDict
 
-
             // Relationships
             var relDict: [String: [String: Any]] = [:]
-            let relCopy = client.relationships
             for (id, (rel, nickname)) in relCopy {
                 relDict[id.description] = [
                     "type": rel.rawValue,
@@ -91,26 +86,26 @@ public class CacheManager {
             cacheDict["relationships"] = relDict
 
             // User settings
-            if let settings = client.clientUserSettings {
+            if let settings = settingsCopy {
                 var foldersArray: [[String: Any]] = []
-                guard let guildFolders = settings.guildFolders else { return }
-                for folder in guildFolders {
-                    let folderDict: [String: Any] = [
-                        "id": folder.id ?? 0,
-                        "name": folder.name ?? "",
-                        "guild_ids": folder.guildIDs?.map { $0.description } ?? [],
-                        "opened": folder.opened ?? false,
-                        "color": folder.color?.argbInt  // store as hex string
-                    ]
-                    foldersArray.append(folderDict)
+                if let guildFolders = settings.guildFolders {
+                    for folder in guildFolders {
+                        let folderDict: [String: Any] = [
+                            "id": folder.id ?? 0,
+                            "name": folder.name ?? "",
+                            "guild_ids": folder.guildIDs?.map { $0.description } ?? [],
+                            "opened": folder.opened ?? false,
+                            "color": folder.color?.argbInt ?? NSNull()
+                        ]
+                        foldersArray.append(folderDict)
+                    }
                 }
-                
                 cacheDict["userSettings"] = [
                     "guild_folders": foldersArray
                 ]
             }
 
-
+            // Write to disk safely
             do {
                 try autoreleasepool {
                     let data = try JSONSerialization.data(withJSONObject: cacheDict, options: [])
@@ -122,100 +117,106 @@ public class CacheManager {
                 client.logger.log("Error saving cache: \(error)")
             }
         }
-
     }
 
-    public func load(client: SLClient) {
-        guard FileManager.default.fileExists(atPath: filePath),
-              let jsonString = try? String(contentsOfFile: filePath, encoding: .utf8),
-              let json = JSONHelper.parseJSON(jsonString) else {
-            client.logger.log("No cache found.")
-            return
-        }
+    // MARK: - Load
+    public func load(client: SLClient, completion: @escaping () -> Void) {
+        Self.cacheQueue.async {
+            guard FileManager.default.fileExists(atPath: self.filePath),
+                  let jsonString = try? String(contentsOfFile: self.filePath, encoding: .utf8),
+                  let json = JSONHelper.parseJSON(jsonString) else {
+                DispatchQueue.main.async {
+                    client.logger.log("No cache found.")
+                    completion()
+                }
+                return
+            }
 
-        // MARK: 1. Load Relationships first
-        if let cachedRelationships = json["relationships"] as? [String: [String: Any]] {
-            var rels: [Snowflake: (Relationship, String?)] = [:]
-            for (id, dict) in cachedRelationships {
-                if let typeRaw = dict["type"] as? Int {
-                    let relType = Relationship(rawValue: typeRaw) ?? .unknown
-                    let nickname = dict["nickname"] as? String
-                    rels[Snowflake(id)!] = (relType, nickname)
+            // Relationships
+            if let cachedRelationships = json["relationships"] as? [String: [String: Any]] {
+                var rels: [Snowflake: (Relationship, String?)] = [:]
+                for (id, dict) in cachedRelationships {
+                    if let typeRaw = dict["type"] as? Int {
+                        let relType = Relationship(rawValue: typeRaw) ?? .unknown
+                        let nickname = dict["nickname"] as? String
+                        rels[Snowflake(id)!] = (relType, nickname)
+                    }
+                }
+                client.relationships = rels
+            }
+
+            // User Settings
+            if let settingsJSON = json["userSettings"] as? [String: Any] {
+                client.clientUserSettings = UserSettings(client, settingsJSON)
+            }
+
+            // Guilds
+            if let cachedGuilds = json["guilds"] as? [String: [String: Any]] {
+                for (id, guildJSON) in cachedGuilds {
+                    let guild = Guild(client, guildJSON)
+                    client.guilds[Snowflake(id)!] = guild
                 }
             }
-            client.relationships = rels
-        }
-        // MARK: 2. Load User Settings
-        if let settingsJSON = json["userSettings"] as? [String: Any] {
-            client.clientUserSettings = UserSettings(client, settingsJSON)
-        }
 
-        // MARK: 3. Load Guilds
-        if let cachedGuilds = json["guilds"] as? [String: [String: Any]] {
-            for (id, guildJSON) in cachedGuilds {
-                let guild = Guild(client, guildJSON)
-                client.guilds[Snowflake(id)!] = guild
-            }
-        }
-        
-        // MARK: 4. Load DMs (requires relationships to exist)
-        if let cachedDMs = json["dms"] as? [String: [String: Any]] {
-            for (id, dmJSON) in cachedDMs {
-                guard let recipients = dmJSON["recipients"] as? [[String: Any]], !recipients.isEmpty else {
-                    client.logger.log("Skipping DM \(id) with no recipients")
-                    continue
-                }
+            // DMs
+            if let cachedDMs = json["dms"] as? [String: [String: Any]] {
+                for (id, dmJSON) in cachedDMs {
+                    guard let recipients = dmJSON["recipients"] as? [[String: Any]], !recipients.isEmpty else {
+                        client.logger.log("Skipping DM \(id) with no recipients")
+                        continue
+                    }
 
-                if let dm = DM(client, dmJSON, client.relationships) {
-                    client.dms[Snowflake(id)!] = dm
-                } else if let gdm = GroupDM(client, dmJSON, client.relationships) {
-                    client.dms[Snowflake(id)!] = gdm
-                } else {
-                    client.logger.log("Failed to load DM \(id)")
+                    if let dm = DM(client, dmJSON, client.relationships) {
+                        client.dms[Snowflake(id)!] = dm
+                    } else if let gdm = GroupDM(client, dmJSON, client.relationships) {
+                        client.dms[Snowflake(id)!] = gdm
+                    } else {
+                        client.logger.log("Failed to load DM \(id)")
+                    }
                 }
             }
-        }
 
-        client.logger.log("Cache loaded successfully.")
+            DispatchQueue.main.async {
+                client.logger.log("Cache loaded successfully.")
+                completion()
+            }
+        }
     }
-    
+
+    // MARK: - Clear
     public func clearCache() {
-        let path = filePath
-        if FileManager.default.fileExists(atPath: path) {
-            do {
-                try FileManager.default.removeItem(atPath: path)
-                print("Cache cleared successfully.")
-            } catch {
-                print("Failed to clear cache: \(error)")
+        Self.cacheQueue.async {
+            let path = self.filePath
+            if FileManager.default.fileExists(atPath: path) {
+                do {
+                    try FileManager.default.removeItem(atPath: path)
+                    print("Cache cleared successfully.")
+                } catch {
+                    print("Failed to clear cache: \(error)")
+                }
+            } else {
+                print("No cache file found to clear.")
             }
-        } else {
-            print("No cache file found to clear.")
         }
     }
 }
 
-import FoundationCompatKit
 
+// MARK: - SLClient Extension
 extension SLClient {
     public var cacheManager: CacheManager {
         return CacheManager()
     }
 
     public func saveCache() {
-        DispatchQueue.global(qos: .background).async {
-            self.cacheManager.save(client: self)
-        }
+        self.cacheManager.save(client: self)
     }
 
     public func loadCache(_ completion: @escaping () -> ()) {
-        DispatchQueue.main.async {
-            self.cacheManager.load(client: self)
-            completion()
-        }
+        self.cacheManager.load(client: self, completion: completion)
     }
-    
+
     public func clearCache() {
         cacheManager.clearCache()
     }
 }
-

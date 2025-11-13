@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import iOS6BarFix
+import NSJSONSerializationForSwift
 import FoundationCompatKit
 
 extension SLClient {
@@ -14,7 +14,8 @@ extension SLClient {
         // Run all parsing on a background queue
         DispatchQueue.global(qos: .userInitiated).async {
             self.logger.log("Parsing READY payload")
-
+            self.gateway?.sessionId = data["session_id"] as? String
+            
             // --- Begin heavy parsing ---
             if let userData = data["user"] as? [String: Any] {
                 self.clientUser = ClientUser(self, userData)
