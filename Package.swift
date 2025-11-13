@@ -15,14 +15,15 @@ let package = Package(
             targets: ["SwiftcordLegacy"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/JWIMaster/FoundationCompatKit.git", branch: "master")
+        .package(url: "https://github.com/JWIMaster/FoundationCompatKit.git", branch: "master"),
+        .package(url: "https://github.com/JWIMaster/UIKitExtensions.git", branch: "master"),
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
         // Targets can depend on other targets in this package, and on products in packages this package depends on.
         .target(
             name: "SwiftcordLegacy",
-            dependencies: ["FoundationCompatKit"]),
+            dependencies: ["FoundationCompatKit", "UIKitExtensions"]),
         .testTarget(
             name: "SwiftcordLegacyTests",
             dependencies: ["SwiftcordLegacy"]),

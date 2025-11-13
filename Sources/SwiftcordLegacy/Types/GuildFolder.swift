@@ -24,6 +24,8 @@ public class GuildFolder {
         }
         if let colorInt = json["color"] as? Int {
             self.color = UIColor(discordColor: colorInt)
+        } else {
+            print(json["color"])
         }
         
     }

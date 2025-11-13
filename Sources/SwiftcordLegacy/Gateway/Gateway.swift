@@ -254,6 +254,7 @@ public class Gateway: NSObject {
             print("READY")
             logger.log("recieved ready")
             DispatchQueue.main.async {
+                self.slClient.handleReady(data)
                 //self.slClient.onReady?()
             }
             autoreleasepool {

@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import iOS6BarFix
 
 struct Payload {
     var op: Int
@@ -29,11 +30,13 @@ struct Payload {
     }
     
     init(with jsonString: String) {
-        let data = jsonString.data(using: .utf8)!
-        let json = (try? JSONSerialization.jsonObject(with: data, options: [])) as? [String: Any] ?? [:]
+        // Use Objective-C parser
+        let json = JSONHelper.parseJSON(jsonString) ?? [:]
+        
         self.op = json["op"] as? Int ?? -1
         self.d = json["d"] ?? NSNull()
         self.t = json["t"] as? String
         self.s = json["s"] as? Int
     }
+
 }

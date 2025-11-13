@@ -30,10 +30,10 @@ public class Guild: DictionaryConvertible, CustomStringConvertible {
         return [
             "id": self.id?.description ?? "",
             "name": self.name ?? "",
-            "icon": self.icon ?? NSNull(),
-            "roles": self.roles.values.map { $0.convertToDict() },
-            "members": self.members.values.map { $0.convertToDict() },
-            "channels": self.channels.values.map { $0.convertToDict() }
+            "icon": self.icon ?? NSNull()
+            //"roles": self.roles.values.map { $0.convertToDict() }
+            //"members": self.members.values.map { $0.convertToDict() },
+            //"channels": self.channels.values.map { $0.convertToDict() }
         ]
     }
 }

@@ -1,0 +1,102 @@
+//
+//  File.swift
+//  
+//
+//  Created by JWI on 12/11/2025.
+//
+
+import Foundation
+import iOS6BarFix
+import FoundationCompatKit
+
+extension SLClient {
+    public func handleReady(_ data: [String: Any]) {
+        // Run all parsing on a background queue
+        DispatchQueue.global(qos: .userInitiated).async {
+            self.logger.log("Parsing READY payload")
+
+            // --- Begin heavy parsing ---
+            if let userData = data["user"] as? [String: Any] {
+                self.clientUser = ClientUser(self, userData)
+            }
+
+            autoreleasepool {
+                if let settingsData = data["user_settings"] as? [String: Any] {
+                    self.clientUserSettings = UserSettings(self, settingsData)
+                }
+            }
+
+            autoreleasepool {
+                if let relationshipsArray = data["relationships"] as? [[String: Any]] {
+                    var rels: [Snowflake: (Relationship, String?)] = [:]
+                    for r in relationshipsArray {
+                        if let id = r["id"] as? String, let type = r["type"] as? Int {
+                            let userID = Snowflake(id)!
+                            let relType = Relationship(rawValue: type) ?? .unknown
+                            let nickname = r["nickname"] as? String
+                            rels[userID] = (relType, nickname)
+                        }
+                    }
+                    self.relationships = rels
+                }
+            }
+
+            var users: [String: [String: Any]] = [:]
+            autoreleasepool {
+                if let usersArray = data["users"] as? [[String: Any]] {
+                    for userJSON in usersArray {
+                        if let id = userJSON["id"] as? String {
+                            users[id] = userJSON
+                        }
+                    }
+                }
+            }
+
+            autoreleasepool {
+                if let privateChannels = data["private_channels"] as? [[String: Any]] {
+                    for channel in privateChannels {
+                        guard let type = channel["type"] as? Int else { continue }
+
+                        switch type {
+                        case 1:
+                            var channelJSON = channel
+                            if let recipientIDs = channel["recipient_ids"] as? [String] {
+                                let recipientsJSON = recipientIDs.compactMap { users[$0] }
+                                channelJSON["recipients"] = recipientsJSON
+                            }
+
+                            if var dm = DM(self, channelJSON, self.relationships) {
+                                self.dms[dm.id!] = dm
+                            }
+
+                        case 3:
+                            if let groupDM = GroupDM(self, channel) {
+                                self.dms[groupDM.id!] = groupDM
+                            }
+
+                        default: break
+                        }
+                    }
+                }
+            }
+
+            autoreleasepool {
+                if let guildsArray = data["guilds"] as? [[String: Any]] {
+                    for guildData in guildsArray {
+                        let guild = Guild(self, guildData)
+                        self.guilds[(guild?.id)!] = guild
+                    }
+                }
+            }
+            // --- End heavy parsing ---
+
+            // Save cache on background as well
+            self.saveCache()
+
+            // Once everything is ready, return to main queue
+            DispatchQueue.main.async {
+                self.onReady?()
+            }
+        }
+    }
+}

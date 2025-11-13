@@ -85,7 +85,7 @@ extension SLClient {
     
     public func getGuildChannels(for guildId: Snowflake, completion: @escaping ([GuildChannel], Error?) -> ()) {
         if let channels = self.guilds[guildId]?.channels.values.map({ $0 }), !channels.isEmpty {
-            print("found full channel cache")
+            print("found full channel cache, \(channels.count)")
             completion(channels, nil)
             return
         }
@@ -143,7 +143,6 @@ extension SLClient {
                 default: break
                 }
             }
-            
             completion(channels, nil)
         }
     }

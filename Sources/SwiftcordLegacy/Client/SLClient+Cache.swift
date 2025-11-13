@@ -1,5 +1,6 @@
 import Foundation
 import UIKit
+import iOS6BarFix
 
 public extension UIColor {
     var argbInt: Int {
@@ -42,87 +43,92 @@ public class CacheManager {
         let dir = dirs.first!
         return dir + "/" + fileName
     }
+    
+    private static let cacheQueue = DispatchQueue(label: "com.slclient.cacheQueue", attributes: .concurrent)
 
 
     public func save(client: SLClient) {
-        var cacheDict: [String: Any] = [:]
+        CacheManager.cacheQueue.async { [weak self] in
+            guard let self = self else { return }
+            var cacheDict: [String: Any] = [:]
 
-        // DMs
-        var dmDict: [String: [String: Any]] = [:]
-        let dmsCopy = client.dms
-        for (id, dmChannel) in dmsCopy {
-            // DM
-            if let dm = dmChannel as? DM {
-                dmDict[id.description] = dm.convertToDict()
+            // DMs
+            var dmDict: [String: [String: Any]] = [:]
+            let dmsCopy = client.dms
+            for (id, dmChannel) in dmsCopy {
+                // DM
+                if let dm = dmChannel as? DM {
+                    dmDict[id.description] = dm.convertToDict()
+                }
+
+                // GroupDM
+                if let gdm = dmChannel as? GroupDM {
+                    dmDict[id.description] = gdm.convertToDict()
+                }
+
             }
+            cacheDict["dms"] = dmDict
 
-            // GroupDM
-            if let gdm = dmChannel as? GroupDM {
-                dmDict[id.description] = gdm.convertToDict()
+            // Guilds
+            // MARK: - Save Guilds with Members and Channels
+            var guildDict: [String: [String: Any]] = [:]
+            let guildsCopy = client.guilds
+            for (id, guild) in guildsCopy {
+                guildDict[id.description] = guild.convertToDict()
             }
-
-        }
-        cacheDict["dms"] = dmDict
-
-        // Guilds
-        // MARK: - Save Guilds with Members and Channels
-        var guildDict: [String: [String: Any]] = [:]
-        let guildsCopy = client.guilds
-        for (id, guild) in guildsCopy {
-            guildDict[id.description] = guild.convertToDict()
-        }
-        cacheDict["guilds"] = guildDict
+            cacheDict["guilds"] = guildDict
 
 
-        // Relationships
-        var relDict: [String: [String: Any]] = [:]
-        let relCopy = client.relationships
-        for (id, (rel, nickname)) in relCopy {
-            relDict[id.description] = [
-                "type": rel.rawValue,
-                "nickname": nickname ?? NSNull()
-            ]
-        }
-        cacheDict["relationships"] = relDict
-
-        // User settings
-        if let settings = client.clientUserSettings {
-            var foldersArray: [[String: Any]] = []
-            guard let guildFolders = settings.guildFolders else { return }
-            for folder in guildFolders {
-                let folderDict: [String: Any] = [
-                    "id": folder.id ?? 0,
-                    "name": folder.name ?? "",
-                    "guild_ids": folder.guildIDs?.map { $0.description } ?? [],
-                    "opened": folder.opened ?? false,
-                    //"color": folder.color?.argbInt ?? "" // store as hex string
+            // Relationships
+            var relDict: [String: [String: Any]] = [:]
+            let relCopy = client.relationships
+            for (id, (rel, nickname)) in relCopy {
+                relDict[id.description] = [
+                    "type": rel.rawValue,
+                    "nickname": nickname ?? NSNull()
                 ]
-                foldersArray.append(folderDict)
             }
-            
-            cacheDict["userSettings"] = [
-                "guild_folders": foldersArray
-            ]
-        }
+            cacheDict["relationships"] = relDict
+
+            // User settings
+            if let settings = client.clientUserSettings {
+                var foldersArray: [[String: Any]] = []
+                guard let guildFolders = settings.guildFolders else { return }
+                for folder in guildFolders {
+                    let folderDict: [String: Any] = [
+                        "id": folder.id ?? 0,
+                        "name": folder.name ?? "",
+                        "guild_ids": folder.guildIDs?.map { $0.description } ?? [],
+                        "opened": folder.opened ?? false,
+                        "color": folder.color?.argbInt  // store as hex string
+                    ]
+                    foldersArray.append(folderDict)
+                }
+                
+                cacheDict["userSettings"] = [
+                    "guild_folders": foldersArray
+                ]
+            }
 
 
-        do {
-            try autoreleasepool {
-                let data = try JSONSerialization.data(withJSONObject: cacheDict, options: [.prettyPrinted])
-                let nsData = data as NSData
-                try nsData.write(to: URL(fileURLWithPath: filePath), options: .atomic)
+            do {
+                try autoreleasepool {
+                    let data = try JSONSerialization.data(withJSONObject: cacheDict, options: [])
+                    let nsData = data as NSData
+                    try nsData.write(to: URL(fileURLWithPath: self.filePath), options: .atomic)
+                }
+                client.logger.log("Cache saved successfully.")
+            } catch {
+                client.logger.log("Error saving cache: \(error)")
             }
-            client.logger.log("Cache saved successfully.")
-        } catch {
-            client.logger.log("Error saving cache: \(error)")
         }
 
     }
 
     public func load(client: SLClient) {
         guard FileManager.default.fileExists(atPath: filePath),
-              let data = try? Data(contentsOf: URL(fileURLWithPath: filePath)),
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+              let jsonString = try? String(contentsOfFile: filePath, encoding: .utf8),
+              let json = JSONHelper.parseJSON(jsonString) else {
             client.logger.log("No cache found.")
             return
         }
