@@ -79,6 +79,7 @@ public enum Event: String {
     case guildMemberListUpdate = "GUILD_MEMBER_LIST_UPDATE"
     case guildMembersChunk = "GUILD_MEMBERS_CHUNK"
     case threadListSync = "THREAD_LIST_SYNC"
+    case typingStart = "TYPING_START"
 }
 
 

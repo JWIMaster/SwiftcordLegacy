@@ -38,6 +38,8 @@ public class Gateway: NSObject {
     public var onMessageUpdate: ((Message) -> Void)?
     public var onMessageDelete: ((Message) -> Void)?
     
+    public var onTypingStart: ((Snowflake, Snowflake) -> Void)?
+    
     public var onGuildMemberListUpdate: (([Snowflake: GuildMember]) -> Void)?
     public var handleThreadListSync: ((_ guildId: Snowflake) -> Void)?
     let logger = LegacyLogger(fileName: "swiftcordlog.txt")
@@ -331,7 +333,20 @@ public class Gateway: NSObject {
             DispatchQueue.main.async {
                 self.handleThreadListSync?(guildId)
             }
-            
+        case .typingStart:
+            guard let channelID = Snowflake(data["channel_id"] as? String), let userID = Snowflake(data["user_id"] as? String) else { return }
+            if let guildID = Snowflake(data["guild_id"] as? String),
+                let guild = self.slClient.guilds[guildID],
+                let memberJson = data["member"] as? [String: Any] {
+                
+                let member = GuildMember(self.slClient, memberJson, guild)
+                if (guild.members[member.user.id!] == nil) {
+                    guild.members[member.user.id!] = member
+                }
+            }
+            DispatchQueue.main.async {
+                self.onTypingStart?(channelID, userID)
+            }
         }
         
     }

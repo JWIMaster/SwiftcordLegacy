@@ -20,7 +20,7 @@ extension SLClient {
             if let userData = data["user"] as? [String: Any] {
                 self.clientUser = ClientUser(self, userData)
             }
-
+            
             autoreleasepool {
                 if let settingsData = data["user_settings"] as? [String: Any] {
                     self.clientUserSettings = UserSettings(self, settingsData)
@@ -41,6 +41,7 @@ extension SLClient {
                     self.relationships = rels
                 }
             }
+    
 
             var users: [String: [String: Any]] = [:]
             autoreleasepool {
@@ -48,6 +49,14 @@ extension SLClient {
                     for userJSON in usersArray {
                         if let id = userJSON["id"] as? String {
                             users[id] = userJSON
+                        }
+                    }
+                    
+                    let userObjectArray = usersArray.map { User(self, $0) }
+                    self.friends = []
+                    for user in userObjectArray {
+                        if let userID = user.id, let relationship = self.relationships[userID], relationship.0 == .friend {
+                            self.friends.append(user)
                         }
                     }
                 }

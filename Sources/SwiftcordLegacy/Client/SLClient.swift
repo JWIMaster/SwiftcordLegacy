@@ -61,6 +61,8 @@ public class SLClient {
     
     public var relationships: [Snowflake: (Relationship, String?)] = [:]
     
+    public var friends = [User]()
+    
     public lazy var sortedDMs: [DMChannel] = dms.values.sorted { dm1, dm2 in
         let id1 = dm1.lastMessageID?.rawValue ?? 0
         let id2 = dm2.lastMessageID?.rawValue ?? 0
