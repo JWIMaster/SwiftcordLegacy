@@ -17,6 +17,7 @@ public struct Role: DictionaryConvertible {
     public let name: String
     public let permissions: Int?
     public let position: Int
+    public let icon: String?
     
     init(_ json: [String: Any]) {
         self.color = UIColor(discordColor: json["color"] as! Int)
@@ -27,6 +28,7 @@ public struct Role: DictionaryConvertible {
         self.name = json["name"] as! String
         self.permissions = json["permissions"] as? Int
         self.position = json["position"] as! Int
+        self.icon = json["icon"] as? String
     }
     
     public func convertToDict() -> [String : Any] {
@@ -38,7 +40,8 @@ public struct Role: DictionaryConvertible {
             "managed": self.isManaged,
             "mentionable": self.isMentionable,
             "permissions": self.permissions ?? NSNull(),
-            "position": self.position
+            "position": self.position,
+            "icon": self.icon ?? NSNull()
         ]
     }
 }
