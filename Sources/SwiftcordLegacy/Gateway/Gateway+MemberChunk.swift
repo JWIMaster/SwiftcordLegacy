@@ -8,17 +8,24 @@
 import Foundation
 
 extension Gateway {
-    
-
-    
     public func addGuildMemberChunkObserver(_ observer: @escaping ([Snowflake: GuildMember]) -> Void) {
         guildMemberChunkObservers.append(observer)
+    }
+    
+    public func addPresenceUpdateObserver(_ observer: @escaping ([Snowflake: PresenceType]) -> Void) {
+        presenceUpdateObservers.append(observer)
     }
 
     // Call this when a chunk event arrives
     internal func handleGuildMemberChunk(_ members: [Snowflake: GuildMember]) {
         for observer in guildMemberChunkObservers {
             observer(members)
+        }
+    }
+    
+    internal func handlePresenceUpdate(_ presence: [Snowflake: PresenceType]) {
+        for observer in presenceUpdateObservers {
+            observer(presence)
         }
     }
     

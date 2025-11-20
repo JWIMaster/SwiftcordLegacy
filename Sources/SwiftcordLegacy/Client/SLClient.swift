@@ -55,6 +55,8 @@ public class SLClient {
     public var dms: [Snowflake: DMChannel] = [:]
     public var guilds: [Snowflake: Guild] = [:]
     
+    public var presences = [Snowflake: PresenceType]()
+    
     public let logger = LegacyLogger(fileName: "rest logs")
     
     public var clientUserSettings: UserSettings?
@@ -105,13 +107,10 @@ public class SLClient {
     public func getUserProfile(withID userID: Snowflake, completion: @escaping (User, UserProfile, Error?) -> ()) {
         self.request(.getUserProfile(user: userID)) { data, error in
             guard let jsonData = data as? [String: Any] else { return }
-            print(jsonData)
             guard let userData = jsonData["user"] as? [String: Any] else { return }
             let user = User(self, userData)
             guard let profileData = jsonData["user_profile"] as? [String: Any] else { return }
             let userProfile = UserProfile(self, profileData)
-            
-            print(profileData)
             
             completion(user, userProfile, nil)
         }

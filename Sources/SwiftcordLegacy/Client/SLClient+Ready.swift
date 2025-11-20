@@ -98,6 +98,42 @@ extension SLClient {
                     }
                 }
             }
+            
+            autoreleasepool {
+                if let merged = data["merged_presences"] as? [String: Any] {
+
+                    var flat: [[String: Any]] = []
+
+                    // FRIENDS
+                    if let friends = merged["friends"] as? [[String: Any]] {
+                        flat.append(contentsOf: friends)
+                    }
+
+                    // GUILDS
+                    if let guilds = merged["guilds"] as? [Any] {
+                        for item in guilds {
+                            if let group = item as? [[String: Any]] {
+                                flat.append(contentsOf: group)
+                            }
+                        }
+                    }
+
+                    // PROCESS
+                    for presence in flat {
+
+                        guard
+                            let userId = presence["user_id"] as? String,
+                            let statusString = presence["status"] as? String,
+                            let presenceType = PresenceType(rawValue: statusString)
+                        else { continue }
+
+                        guard let userID = Snowflake(userId) else { continue }
+
+                        self.presences[userID] = presenceType
+                    }
+                }
+            }
+
             // --- End heavy parsing ---
 
             // Save cache on background as well

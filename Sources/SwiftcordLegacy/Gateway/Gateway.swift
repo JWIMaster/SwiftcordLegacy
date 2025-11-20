@@ -47,6 +47,9 @@ public class Gateway: NSObject {
     public var onReconnect: (() -> Void)?
     
     internal var guildMemberChunkObservers: [( [Snowflake: GuildMember] ) -> Void] = []
+    
+    internal var presenceUpdateObservers: [( [Snowflake: PresenceType] ) -> Void] = []
+    
     internal var pendingGuildSubscriptions: [(guildId: Snowflake, channelId: Snowflake   )] = []
     internal var isReady = false
     
@@ -347,6 +350,13 @@ public class Gateway: NSObject {
             DispatchQueue.main.async {
                 self.onTypingStart?(channelID, userID)
             }
+        case .presenceUpdate:
+            guard let presence = PresenceType(rawValue: data["status"] as! String), let userJson = data["user"] as? [String: Any], let userID = Snowflake(userJson["id"] as? String) else { return }
+            self.slClient.presences[userID] = presence
+            DispatchQueue.main.async {
+                self.handlePresenceUpdate([userID: presence])
+            }
+            
         }
         
     }

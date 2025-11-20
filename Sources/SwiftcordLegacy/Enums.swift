@@ -80,6 +80,7 @@ public enum Event: String {
     case guildMembersChunk = "GUILD_MEMBERS_CHUNK"
     case threadListSync = "THREAD_LIST_SYNC"
     case typingStart = "TYPING_START"
+    case presenceUpdate = "PRESENCE_UPDATE"
 }
 
 
@@ -90,4 +91,11 @@ public enum Relationship: Int, Codable {
     case pendingOutgoing = 4
     case unknown = 0
     case implicit = 5
+}
+
+public enum PresenceType: String {
+    case offline = "offline"
+    case dnd = "dnd"
+    case online = "online"
+    case idle = "idle"
 }
