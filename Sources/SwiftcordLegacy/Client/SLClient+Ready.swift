@@ -75,8 +75,9 @@ extension SLClient {
                                 channelJSON["recipients"] = recipientsJSON
                             }
 
-                            if var dm = DM(self, channelJSON, self.relationships) {
+                            if let dm = DM(self, channelJSON, self.relationships) {
                                 self.dms[dm.id!] = dm
+
                             }
 
                         case 3:

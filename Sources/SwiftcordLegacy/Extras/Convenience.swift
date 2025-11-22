@@ -26,6 +26,13 @@ extension SLClient {
             completion(sortedDMs, nil)
         }
     }
+    
+    public func send(image: UIImage, withMessage message: Message? = nil, in channel: TextChannel, completion: @escaping (Error?) -> ()) {
+        let imageData = image.jpegData(compressionQuality: 0.9)!
+        self.send(imageData: imageData, withMessage: message, in: channel, completion: { error in
+            
+        })
+    }
 }
 
 

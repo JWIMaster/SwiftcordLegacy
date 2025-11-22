@@ -108,7 +108,73 @@ public extension SLClient {
             logger.log("[RateLimit] Retry-After (ms): \(retryAfter)")
         }
     }
+    
+    public func requestMultipart(_ endpoint: Endpoint,
+                                 parts: [(name: String, filename: String?, mime: String?, data: Data)],
+                                 payload: [String: Any]? = nil,
+                                 completion: @escaping (Any?, Error?) -> ()) {
+
+        let boundary = "----SLClientBoundary\(UUID().uuidString)"
+
+        guard let url = URL(string: "https://discordapp.com/api/v9\(endpoint.httpInfo.url)") else {
+            completion(nil, NSError(domain: "SLClient", code: -1, userInfo: nil))
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = endpoint.httpInfo.method.rawValue
+        request.addValue(self.token, forHTTPHeaderField: "Authorization")
+        request.addValue(userAgent, forHTTPHeaderField: "User-Agent")
+        request.addValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+
+        var body = Data()
+
+        // payload_json (Discord requires this for message content)
+        if let payload = payload {
+            let payloadData = try! JSONSerialization.data(withJSONObject: payload, options: [])
+            body.append("--\(boundary)\r\n".data(using: .utf8)!)
+            body.append("Content-Disposition: form-data; name=\"payload_json\"\r\n".data(using: .utf8)!)
+            body.append("Content-Type: application/json\r\n\r\n".data(using: .utf8)!)
+            body.append(payloadData)
+            body.append("\r\n".data(using: .utf8)!)
+        }
+
+        // Add file parts
+        for part in parts {
+            body.append("--\(boundary)\r\n".data(using: .utf8)!)
+            if let filename = part.filename {
+                body.append("Content-Disposition: form-data; name=\"\(part.name)\"; filename=\"\(filename)\"\r\n".data(using: .utf8)!)
+            } else {
+                body.append("Content-Disposition: form-data; name=\"\(part.name)\"\r\n".data(using: .utf8)!)
+            }
+            if let mime = part.mime {
+                body.append("Content-Type: \(mime)\r\n\r\n".data(using: .utf8)!)
+            } else {
+                body.append("\r\n".data(using: .utf8)!)
+            }
+            body.append(part.data)
+            body.append("\r\n".data(using: .utf8)!)
+        }
+
+        body.append("--\(boundary)--\r\n".data(using: .utf8)!)
+        request.httpBody = body
+
+        let task = session.dataTask(with: request) { data, response, error in
+            if let data = data {
+                let json = (try? JSONSerialization.jsonObject(with: data)) ?? nil
+                completion(json, error)
+            } else {
+                completion(nil, error)
+            }
+        }
+
+        task.resume()
+    }
 }
+
+
+
+
 
 
 

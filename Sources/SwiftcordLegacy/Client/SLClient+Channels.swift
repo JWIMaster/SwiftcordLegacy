@@ -6,12 +6,29 @@
 //
 
 import Foundation
+import UIKit
 
 extension SLClient {
     ///Function to send a message string to a specified channel
     public func send(message: Message, in channel: TextChannel, completion: @escaping (Error?) -> ()) {
         guard let content = message.content, let channelID = channel.id else { return }
         self.request(.sendMessage(channelID), body: ["content": content]) { data, error in
+            completion(nil)
+        }
+    }
+    
+    public func send(imageData: Data, withMessage message: Message? = nil, in channel: TextChannel, completion: @escaping (Error?) -> ()) {
+        guard let channelID = channel.id else { return }
+        let content = message?.content
+        let parts = [
+            (
+                name: "files[0]",
+                filename: "upload.jpg",
+                mime: "image/jpeg",
+                data: imageData
+            )
+        ]
+        self.requestMultipart(.sendMessage(channelID), parts: parts, payload: ["content": content]) { data, error in
             completion(nil)
         }
     }
