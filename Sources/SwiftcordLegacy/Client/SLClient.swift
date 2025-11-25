@@ -54,13 +54,21 @@ public class SLClient {
     }
     
     public func connect() {
-        if var gateway = gateway {
+        if let gateway = gateway {
             gateway.stop()
 
         }
         self.gateway = Gateway(self, token: self.token)
         self.gateway?.start()
         
+    }
+    
+    public func disconnect() {
+        if let gateway = gateway {
+            gateway.stop()
+        }
+        
+        self.gateway = nil
     }
     
     public func getUser(withID userID: Snowflake, completion: @escaping (User, Error?) -> ()) {
