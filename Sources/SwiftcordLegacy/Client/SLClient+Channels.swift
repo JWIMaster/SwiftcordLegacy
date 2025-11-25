@@ -52,8 +52,6 @@ extension SLClient {
     }
     
     
-    
-    
     public func delete(message: Message, in channel: TextChannel, completion: @escaping (Error?) -> ()) {
         guard let messageID = message.id, let channelID = channel.id else { return }
         self.request(.deleteMessage(channel: channelID, message: messageID)) { data, error in

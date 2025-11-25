@@ -109,7 +109,7 @@ public extension SLClient {
         }
     }
     
-    public func requestMultipart(_ endpoint: Endpoint,
+    func requestMultipart(_ endpoint: Endpoint,
                                  parts: [(name: String, filename: String?, mime: String?, data: Data)],
                                  payload: [String: Any]? = nil,
                                  completion: @escaping (Any?, Error?) -> ()) {

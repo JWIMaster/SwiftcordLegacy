@@ -53,6 +53,8 @@ public class Gateway: NSObject {
     internal var pendingGuildSubscriptions: [(guildId: Snowflake, channelId: Snowflake   )] = []
     internal var isReady = false
     
+    public var onInvalidToken: (() -> Void)?
+    
     let payloadQueue = DispatchQueue(label: "com.swiftcord.payloadQueue")
     var didHandleReady = false
     let readyLock = NSLock()

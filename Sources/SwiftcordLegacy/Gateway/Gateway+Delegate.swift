@@ -29,6 +29,9 @@ extension Gateway: SRWebSocketDelegate {
     public func webSocket(_ webSocket: SRWebSocket!, didFailWithError error: Error!) {
         isConnected = false
         print("[Gateway] ❌ Connection failed:", error.localizedDescription)
+        if error.localizedDescription.contains("4004") {
+            self.onInvalidToken?()
+        }
         reconnect()
     }
     
@@ -36,6 +39,7 @@ extension Gateway: SRWebSocketDelegate {
         print("[Gateway] 🔴 Closed with code \(code), reason: \(reason ?? "none")")
         if code == 4004 {
             print("[Gateway] ❌ Invalid token")
+            self.onInvalidToken?()
         } else if !isReconnecting {
             isReconnecting = true
             reconnect()

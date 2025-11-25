@@ -46,11 +46,3 @@ public struct Role: DictionaryConvertible {
     }
 }
 
-public extension UIColor {
-    convenience init(discordColor value: Int) {
-        let red = CGFloat((value >> 16) & 0xFF) / 255.0
-        let green = CGFloat((value >> 8) & 0xFF) / 255.0
-        let blue = CGFloat(value & 0xFF) / 255.0
-        self.init(red: red, green: green, blue: blue, alpha: 1.0)
-    }
-}

@@ -23,6 +23,7 @@ public enum Endpoint {
     case getUser(user: Snowflake)
     case getUserProfile(user: Snowflake)
     case getUserSettings
+    case acknowledgeMessage(channel: Snowflake, message: Snowflake)
 }
 
 public enum OP: Int {
@@ -98,4 +99,9 @@ public enum PresenceType: String {
     case dnd = "dnd"
     case online = "online"
     case idle = "idle"
+}
+
+public enum EmbedType: String {
+    case rich = "rich"
+    case image = "image"
 }

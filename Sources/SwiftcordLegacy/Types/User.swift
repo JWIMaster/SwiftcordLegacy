@@ -34,7 +34,11 @@ public class User: Equatable, CustomStringConvertible, DictionaryConvertible {
         self.mfaEnabled = json["mfa_enabled"] as? Bool ?? false
         self.bio = json["bio"] as? String
         self.avatar = nil
-        self.nickname = nickname
+        if let nicknameString = json["nick"] as? String, nickname == nil {
+            self.nickname = nicknameString
+        } else {
+            self.nickname = nickname
+        }
         self.relationship = relationship
     }
     

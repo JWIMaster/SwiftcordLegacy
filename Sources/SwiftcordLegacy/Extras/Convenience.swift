@@ -35,19 +35,20 @@ extension SLClient {
     }
 }
 
+public extension UIColor {
+    convenience init(discordColor value: Int) {
+        let red = CGFloat((value >> 16) & 0xFF) / 255.0
+        let green = CGFloat((value >> 8) & 0xFF) / 255.0
+        let blue = CGFloat(value & 0xFF) / 255.0
+        self.init(red: red, green: green, blue: blue, alpha: 1.0)
+    }
+}
+
+
 
 public var userAgent: String {
     // 1. Get iOS version
     let osVersion = UIDevice.current.systemVersion.replacingOccurrences(of: ".", with: "_")
-    
-    // 2. Get device architecture
-    var systemInfo = utsname()
-    uname(&systemInfo)
-    let machine = withUnsafePointer(to: &systemInfo.machine) { ptr in
-        ptr.withMemoryRebound(to: CChar.self, capacity: 1) {
-            String(cString: $0)
-        }
-    }
     
     // 3. Get device model (iPhone/iPad)
     let deviceModel = UIDevice.current.model // e.g., "iPhone"
