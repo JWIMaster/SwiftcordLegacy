@@ -8,6 +8,37 @@
 import Foundation
 import UIKit
 
+extension Data {
+    func base64Encode() -> String {
+        let alphabet = Array("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/")
+        var out = ""
+        let bytes = [UInt8](self)
+
+        var i = 0
+        while i < bytes.count {
+            let b0 = bytes[i]
+            let has1 = i + 1 < bytes.count
+            let has2 = i + 2 < bytes.count
+            let b1: UInt8 = has1 ? bytes[i + 1] : 0
+            let b2: UInt8 = has2 ? bytes[i + 2] : 0
+
+            let i0 = b0 >> 2
+            let i1 = ((b0 & 0x03) << 4) | (b1 >> 4)
+            let i2 = ((b1 & 0x0F) << 2) | (b2 >> 6)
+            let i3 = b2 & 0x3F
+
+            out.append(alphabet[Int(i0)])
+            out.append(alphabet[Int(i1)])
+            out.append(has1 ? alphabet[Int(i2)] : "=")
+            out.append(has2 ? alphabet[Int(i3)] : "=")
+
+            i += 3
+        }
+
+        return out
+    }
+}
+
 extension SLClient {
     public func getSortedDMs(completion: @escaping ([DMChannel], Error?) -> ()) {
         self.getDMs() { dms, error in
@@ -44,7 +75,64 @@ public extension UIColor {
     }
 }
 
+public let discordSuperProperties: [String: Any] = {
+    let osVersion = UIDevice.current.systemVersion
+    let systemLocale = Locale.current.identifier
+    let deviceVendorID = UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
+    let device: String = {
+        switch UIDevice.current.userInterfaceIdiom {
+        case .phone:
+            return "iPhone"
+        case .pad:
+            return "iPad"
+        case .unspecified:
+            return "iPhone"
+        case .mac:
+            return "Mac"
+        default:
+            return "iPhone"
+        }
+    }()
+    // Get machine architecture
+    var systemInfo = utsname()
+    uname(&systemInfo)
+    let modelCode = withUnsafePointer(to: &systemInfo.machine) {
+        $0.withMemoryRebound(to: CChar.self, capacity: 1) {
+            ptr in String.init(validatingUTF8: ptr)
+        }
+    }
+    let arch = withUnsafePointer(to: &systemInfo.machine) { ptr in
+        ptr.withMemoryRebound(to: CChar.self, capacity: 1) {
+            String(cString: $0)
+        }
+    }
+    
+    let properties: [String: Any] = [
+        "os": "iOS",
+        "browser": "Discord iOS",
+        "device": modelCode,
+        "system_locale": "en-US",
+        "client_version": "0.0.326",
+        "release_channel": "stable",
+        "device_vendor_id": deviceVendorID,
+        "browser_user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) discord/0.0.326 Chrome/128.0.6613.186 Electron/32.2.2 Safari/537.36",
+        "browser_version": "32.2.2",
+        "os_version": osVersion,
+        "os_arch": arch,
+        "app_arch": arch,
+        "os_sdk_version": "23",
+        "client_build_number": 209354,
+        "native_build_number": NSNull(),
+        "client_event_source": NSNull()
+    ]
+    
+    return properties
+}()
 
+public let discordSuperPropertiesBase64: String = {
+    let json = try! JSONSerialization.data(withJSONObject: discordSuperProperties)
+    return json.base64Encode()
+}()
 
 public var userAgent: String {
     // 1. Get iOS version
@@ -62,3 +150,13 @@ public var userAgent: String {
     // 5. Construct UA string
     return "Mozilla/5.0 (\(deviceModel); CPU \(deviceModel) OS \(osVersion) like Mac OS X) AppleWebKit/\(webkitVersion) (KHTML, like Gecko) discord/\(discordVersion) Mobile/\(mobileBuild) Safari/\(safariVersion)"
 }
+
+public let additionalHeaders: [String: String] = [
+    "x-super-properties": discordSuperPropertiesBase64,
+    "x-discord-locale": "en-US",
+    "Referrer": "https://discord.com/channels/@me",
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15",
+    "Host": "discordapp.com",
+    "Accept": "*/*"
+]
+

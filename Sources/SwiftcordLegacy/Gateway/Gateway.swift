@@ -159,45 +159,10 @@ public class Gateway: NSObject {
         identifyCooldown = true
         lastIdentifyDate = now
         
-        let osVersion = UIDevice.current.systemVersion
-        let systemLocale = Locale.current.identifier
-        let device: String = {
-            switch UIDevice.current.userInterfaceIdiom {
-            case .phone:
-                return "iPhone"
-            case .pad:
-                return "iPad"
-            case .unspecified:
-                return "iPhone"
-            case .mac:
-                return "Mac"
-            default:
-                return "iPhone"
-            }
-        }()
-        // Get machine architecture
-        var systemInfo = utsname()
-        uname(&systemInfo)
-        let arch = withUnsafePointer(to: &systemInfo.machine) { ptr in
-            ptr.withMemoryRebound(to: CChar.self, capacity: 1) {
-                String(cString: $0)
-            }
-        }
-        
         
         let data: [String: Any] = [
             "token": token,
-            "properties": [
-                "browser": "Discord Client",
-                "os": "iOS",
-                "device": device,
-                "release_channel": "stable",
-                "client_version": "0.0.296",
-                "os_version": osVersion,
-                "os_arch": arch,
-                "system_locale": systemLocale,
-                "client_build_number": 197575
-            ],
+            "properties": discordSuperProperties,
             "compress": false,
             "large_threshold": 50,
             "capabilities": 8209,

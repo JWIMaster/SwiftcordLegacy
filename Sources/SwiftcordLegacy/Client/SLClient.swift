@@ -14,6 +14,11 @@ import Foundation
 public class SLClient {
     public let token: String
     public let session: URLSessionCompat
+    public let sessionConfig: URLSessionConfigurationCompat = {
+        let config = URLSessionConfigurationCompat()
+        config.httpAdditionalHeaders = additionalHeaders
+        return config
+    }()
     public var gateway: Gateway?
     public var clientUser: ClientUser?
     
@@ -44,7 +49,7 @@ public class SLClient {
     public init(token: String) {
         self.token = token
         
-        self.session = URLSessionCompat(configuration: .default)
+        self.session = URLSessionCompat(configuration: self.sessionConfig)
         
         self.getClientUser() { user, error in
             
