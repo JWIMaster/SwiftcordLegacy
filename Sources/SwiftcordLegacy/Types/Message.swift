@@ -30,6 +30,7 @@ public struct Message: DiscordMessage {
     public let replyMessage: ReplyMessage?
     public let embeds: [Embed]?
     public var mentions = [User]()
+    public var reactions = [Reaction]()
     
     public init(_ slClient: SLClient, _ json: [String: Any]) {
         self.id = Snowflake(json["id"])
@@ -66,9 +67,11 @@ public struct Message: DiscordMessage {
         }
         
         if let mentions = json["mentions"] as? [[String: Any]] {
-            for mention in mentions {
-                self.mentions.append(User(slClient, mention))
-            }
+            self.mentions = mentions.map { User(slClient, $0) }
+        }
+        
+        if let reactions = json["reactions"] as? [[String: Any]] {
+            self.reactions = reactions.map { Reaction($0) }
         }
     }
 }
@@ -113,10 +116,31 @@ public struct ReplyMessage: DiscordMessage {
         }
         
         if let mentions = json["mentions"] as? [[String: Any]] {
-            for mention in mentions {
-                self.mentions.append(User(slClient, mention))
-            }
+            self.mentions = mentions.map { User(slClient, $0) }
         }
     }
 }
 
+public struct Reaction {
+    public var count: Int?
+    public var me: Bool?
+    public var emoji: Emoji?
+    
+    public init(_ json: [String: Any]) {
+        self.count = json["count"] as? Int
+        self.me = json["me"] as? Bool
+        if let emojiJson = json["emoji"] as? [String: Any] {
+            self.emoji = Emoji(emojiJson)
+        }
+    }
+}
+
+public struct Emoji {
+    public var id: Snowflake?
+    public var name: String?
+    
+    public init(_ json: [String: Any]) {
+        self.id = Snowflake(json["id"] as? String)
+        self.name = json["name"] as? String
+    }
+}
