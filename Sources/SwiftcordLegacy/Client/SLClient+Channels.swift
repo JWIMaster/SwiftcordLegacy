@@ -123,5 +123,25 @@ extension SLClient {
             }
         }
     }
+    
+    
+    public func acknowledge(message: Message, in channel: Channel, completion: @escaping ((Error?) -> ())) {
+        let body: [String: Any] = [
+            "token": NSNull(),
+            "last_viewed": NSNumber(value: 3287)
+        ]
 
+        self.request(.acknowledgeMessage(channel: channel.id!, message: message.id!), body: body) { _, error in
+        }
+    }
+    
+    public func acknowledge(messageID: Snowflake, in channelID: Snowflake, completion: @escaping ((Error?) -> ())) {
+        let body: [String: Any] = [
+            "token": NSNull(),
+            "last_viewed": NSNumber(value: 3287)
+        ]
+
+        self.request(.acknowledgeMessage(channel: channelID, message: messageID), body: body) { _, error in
+        }
+    }
 }

@@ -43,7 +43,7 @@ extension Endpoint {
         case .getUserSettings:
             return (.get, "/users/@me/settings")
         case let .acknowledgeMessage(channel, message):
-            return (.post, "channels/\(channel)/messages/\(message)/ack")
+            return (.post, "/channels/\(channel)/messages/\(message)/ack")
         }
     }
 }
