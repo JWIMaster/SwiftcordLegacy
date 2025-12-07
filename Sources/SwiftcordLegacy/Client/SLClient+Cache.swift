@@ -131,7 +131,6 @@ public class CacheManager {
                 }
                 return
             }
-
             // Relationships
             if let cachedRelationships = json["relationships"] as? [String: [String: Any]] {
                 var rels: [Snowflake: (Relationship, String?)] = [:]

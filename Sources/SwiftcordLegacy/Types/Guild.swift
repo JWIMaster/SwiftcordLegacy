@@ -21,6 +21,58 @@ public class Guild: DictionaryConvertible, CustomStringConvertible {
                 self.roles[role.id] = role
             }
         }
+        
+        if let channelArray = json["channels"] as? [[String: Any]] {
+
+            // First pass: create categories
+            for channelJson in channelArray {
+                guard let typeInt = channelJson["type"] as? Int,
+                      let type = ChannelType(rawValue: typeInt) else { continue }
+
+                switch type {
+                case .guildCategory:
+                    var category = GuildCategory(slClient, channelJson)
+                    category.guild = self
+                    self.channels[category.id!] = category
+                    category.channels = [:]     // ensure child dictionary exists
+                default:
+                    break
+                }
+            }
+
+            // Second pass: create non-category channels and attach them to parents
+            for channelJson in channelArray {
+                guard let typeInt = channelJson["type"] as? Int,
+                      let type = ChannelType(rawValue: typeInt) else { continue }
+
+                switch type {
+
+                case .guildText:
+                    var channel = GuildText(slClient, channelJson)
+                    channel.guild = self
+                    self.channels[channel.id!] = channel
+
+                    if let parentID = channel.parentID, let parent = self.channels[parentID] as? GuildCategory {
+                        parent.channels[channel.id!] = channel
+                    }
+
+                case .guildForum:
+                    var forum = GuildForum(slClient, channelJson)
+                    forum.guild = self                     self.channels[forum.id!] = forum
+
+                    if let parentID = forum.parentID, let parent = self.channels[parentID] as? GuildCategory {
+                        parent.channels[forum.id!] = forum
+                    }
+
+                case .guildCategory:
+                    break
+
+                default:
+                    break
+                }
+            }
+        }
+
     }
     public var description: String {
             return "Guild(id: \(id?.description ?? "nil"), name: \(name ?? "nil"), icon: \(icon ?? "nil"), roles: \(roles.count), members: \(members.count), channels: \(channels.count), fullGuild: \(fullGuild))"
@@ -30,7 +82,7 @@ public class Guild: DictionaryConvertible, CustomStringConvertible {
         return [
             "id": self.id?.description ?? "",
             "name": self.name ?? "",
-            "icon": self.icon ?? NSNull()
+            "icon": self.icon ?? NSNull(),
             //"roles": self.roles.values.map { $0.convertToDict() }
             //"members": self.members.values.map { $0.convertToDict() },
             //"channels": self.channels.values.map { $0.convertToDict() }

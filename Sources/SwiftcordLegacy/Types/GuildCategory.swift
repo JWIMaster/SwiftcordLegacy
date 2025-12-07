@@ -36,7 +36,13 @@ public class GuildCategory: GuildChannel {
     }
     
     public func convertToDict() -> [String : Any] {
-        return [:]
+        return [
+            "id": self.id?.description,
+            "type": self.type.rawValue,
+            "name": self.name,
+            "parent_id": self.parentID?.description,
+            "channels": self.channels.values.map { $0.convertToDict() }
+        ]
     }
 }
 

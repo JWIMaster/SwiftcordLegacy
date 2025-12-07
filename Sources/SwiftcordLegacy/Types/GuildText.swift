@@ -49,9 +49,9 @@ public struct GuildText: GuildChannel {
             "id": self.id?.description,
             "name": self.name ?? "",
             "type": self.type.rawValue,
-            "parent_id": self.parentID?.rawValue ?? NSNull(),
+            "parent_id": self.parentID?.description ?? NSNull(),
             "position": self.position ?? NSNull(),
-            "last_message_id": self.lastMessageID?.rawValue ?? NSNull()
+            "last_message_id": self.lastMessageID?.description ?? NSNull()
         ]
     }
 }

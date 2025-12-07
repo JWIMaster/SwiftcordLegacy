@@ -4,6 +4,7 @@ import FoundationCompatKit
 import SocketRocket
 import UIKit
 import Darwin
+import zlib
 
 public typealias DispatchWorkItem = FoundationCompatKit.DispatchWorkItem
 
@@ -58,6 +59,8 @@ public class Gateway: NSObject {
     let payloadQueue = DispatchQueue(label: "com.swiftcord.payloadQueue")
     var didHandleReady = false
     let readyLock = NSLock()
+
+
 
     
     init(_ slClient: SLClient, token: String, gatewayUrl: String = "wss://gateway.discord.gg/?encoding=json&v=9") {
@@ -137,6 +140,7 @@ public class Gateway: NSObject {
         print("[Gateway] ⚠️ Missed heartbeat ACK — reconnecting...")
         closeAndReconnect(code: 4000)
     }
+    
     
     
     // MARK: - Identify / Resume

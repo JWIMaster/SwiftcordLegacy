@@ -38,7 +38,7 @@ public protocol DMChannel: TextChannel {
 }
 
 public protocol GuildChannel: TextChannel {
-    var guild: Guild? { get }
+    var guild: Guild? { get set }
     var name: String? { get }
     var position: Int? { get }
     var parentID: Snowflake? { get }
