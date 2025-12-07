@@ -58,7 +58,8 @@ public class Guild: DictionaryConvertible, CustomStringConvertible {
 
                 case .guildForum:
                     var forum = GuildForum(slClient, channelJson)
-                    forum.guild = self                     self.channels[forum.id!] = forum
+                    forum.guild = self
+                    self.channels[forum.id!] = forum
 
                     if let parentID = forum.parentID, let parent = self.channels[parentID] as? GuildCategory {
                         parent.channels[forum.id!] = forum
