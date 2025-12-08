@@ -12,6 +12,8 @@ public extension NSNotification.Name {
     static let messageDelete = NSNotification.Name("MESSAGE_DELETE")
     static let messageUpdate = NSNotification.Name("MESSAGE_UPDATE")
     static let ready = NSNotification.Name("READY")
+    static let guildMemberChunk = NSNotification.Name("GUILD_MEMBER_CHUNK")
+    static let typingStart = NSNotification.Name("TYPING_START")
 }
 
 public extension Notification.Name {

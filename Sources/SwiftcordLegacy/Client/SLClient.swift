@@ -138,6 +138,21 @@ public class SLClient {
             completion(userSettings, nil)
         }
     }
+    
+    public func create(reaction: Reaction, in channel: Snowflake, on message: Snowflake , completion: @escaping ((Error?) -> ())) {
+        guard let emoji = reaction.emoji else { return }
+        var emojiString: String
+        if let emojiID = emoji.id?.description, let emojiName = emoji.name {
+            emojiString = "\(emojiName):\(emojiID)"
+        } else if let emojiName = emoji.name {
+            emojiString = emojiName.urlPathPercentEncoded()
+        } else {
+            emojiString = ""
+        }
+        self.request(.createReaction(channel: channel, message: message, emoji: emojiString)) { _, _ in
+            completion(nil)
+        }
+    }
 }
 
 

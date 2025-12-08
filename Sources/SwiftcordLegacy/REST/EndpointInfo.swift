@@ -44,6 +44,8 @@ extension Endpoint {
             return (.get, "/users/@me/settings")
         case let .acknowledgeMessage(channel, message):
             return (.post, "/channels/\(channel)/messages/\(message)/ack")
+        case let .createReaction(channel, message, emoji):
+            return (.put, "/channels/\(channel)/messages/\(message)/reactions/\(emoji)/@me")
         }
     }
 }

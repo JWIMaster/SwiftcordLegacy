@@ -240,13 +240,22 @@ public class Gateway: NSObject {
             break
         case .messageCreate:
             let message = Message(slClient, data)
-            DispatchQueue.main.async { self.onMessageCreate?(message) }
+            DispatchQueue.main.async {
+                self.onMessageCreate?(message)
+                NotificationCenter.default.post(name: .messageCreate, object: message)
+            }
         case .messageUpdate:
             let message = Message(slClient, data)
-            DispatchQueue.main.async { self.onMessageUpdate?(message) }
+            DispatchQueue.main.async {
+                self.onMessageUpdate?(message)
+                NotificationCenter.default.post(name: .messageUpdate, object: message)
+            }
         case .messageDelete:
             let message = Message(slClient, data)
-            DispatchQueue.main.async { self.onMessageDelete?(message) }
+            DispatchQueue.main.async {
+                self.onMessageDelete?(message)
+                NotificationCenter.default.post(name: .messageDelete, object: message)
+            }
         case .guildMembersChunk:
             guard let guildIdStr = data["guild_id"] as? String,
                   let guildId = Snowflake(guildIdStr),
@@ -262,6 +271,7 @@ public class Gateway: NSObject {
             let members = guild.members
             if !members.isEmpty {
                 DispatchQueue.main.async {
+                    NotificationCenter.default.post(name: .guildMemberChunk, object: members)
                     self.handleGuildMemberChunk(members)
                 }
             }
@@ -320,6 +330,7 @@ public class Gateway: NSObject {
             }
             DispatchQueue.main.async {
                 self.onTypingStart?(channelID, userID)
+                NotificationCenter.default.post(name: .typingStart, object: (channelID, userID))
             }
         case .presenceUpdate:
             guard let presence = PresenceType(rawValue: data["status"] as! String), let userJson = data["user"] as? [String: Any], let userID = Snowflake(userJson["id"] as? String) else { return }
@@ -327,6 +338,8 @@ public class Gateway: NSObject {
             DispatchQueue.main.async {
                 self.handlePresenceUpdate([userID: presence])
             }
+        case .messageReactionAdd:
+            break
             
         }
         
