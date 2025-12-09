@@ -125,6 +125,8 @@ public struct Reaction {
     public var count: Int?
     public var me: Bool?
     public var emoji: Emoji?
+    public var messageID: Snowflake?
+    public var userID: Snowflake?
     
     public init(_ json: [String: Any]) {
         self.count = json["count"] as? Int
@@ -132,10 +134,12 @@ public struct Reaction {
         if let emojiJson = json["emoji"] as? [String: Any] {
             self.emoji = Emoji(emojiJson)
         }
+        self.messageID = Snowflake(json["message_id"] as? String)
+        self.userID = Snowflake(json["user_id"] as? String)
     }
 }
 
-public struct Emoji {
+public struct Emoji: Equatable {
     public var id: Snowflake?
     public var name: String?
     

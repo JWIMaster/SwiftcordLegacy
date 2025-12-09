@@ -46,6 +46,8 @@ extension Endpoint {
             return (.post, "/channels/\(channel)/messages/\(message)/ack")
         case let .createReaction(channel, message, emoji):
             return (.put, "/channels/\(channel)/messages/\(message)/reactions/\(emoji)/@me")
+        case let .deleteOwnReaction(channel, message, emoji):
+            return (.delete, "/channels/\(channel)/messages/\(message)/reactions/\(emoji)/0/@me")
         }
     }
 }

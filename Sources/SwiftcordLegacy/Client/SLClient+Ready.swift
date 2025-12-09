@@ -143,6 +143,7 @@ extension SLClient {
             // Once everything is ready, return to main queue
             DispatchQueue.main.async {
                 self.onReady?()
+                NotificationCenter.default.post(name: .readyProcessed, object: nil)
             }
         }
     }

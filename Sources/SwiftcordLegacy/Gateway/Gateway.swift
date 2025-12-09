@@ -336,11 +336,29 @@ public class Gateway: NSObject {
             guard let presence = PresenceType(rawValue: data["status"] as! String), let userJson = data["user"] as? [String: Any], let userID = Snowflake(userJson["id"] as? String) else { return }
             self.slClient.presences[userID] = presence
             DispatchQueue.main.async {
+                NotificationCenter.default.post(name: .presenceUpdate, object: [userID: presence])
                 self.handlePresenceUpdate([userID: presence])
             }
         case .messageReactionAdd:
-            break
-            
+            var reaction = Reaction(data)
+            if reaction.userID == slClient.clientUser?.id {
+                reaction.me = true
+            } else {
+                reaction.me = false
+            }
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: .messageReactionAdd, object: reaction)
+            }
+        case .messageReactionRemove:
+            var reaction = Reaction(data)
+            if reaction.userID == slClient.clientUser?.id {
+                reaction.me = true
+            } else {
+                reaction.me = false
+            }
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: .messageReactionRemove, object: reaction)
+            }
         }
         
     }

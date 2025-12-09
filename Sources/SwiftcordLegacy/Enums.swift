@@ -25,6 +25,7 @@ public enum Endpoint {
     case getUserSettings
     case acknowledgeMessage(channel: Snowflake, message: Snowflake)
     case createReaction(channel: Snowflake, message: Snowflake, emoji: String)
+    case deleteOwnReaction(channel: Snowflake, message: Snowflake, emoji: String)
 }
 
 public enum OP: Int {
@@ -84,6 +85,7 @@ public enum Event: String {
     case typingStart = "TYPING_START"
     case presenceUpdate = "PRESENCE_UPDATE"
     case messageReactionAdd = "MESSAGE_REACTION_ADD"
+    case messageReactionRemove = "MESSAGE_REACTION_REMOVE"
 }
 
 

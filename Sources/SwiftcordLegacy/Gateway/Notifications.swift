@@ -14,6 +14,10 @@ public extension NSNotification.Name {
     static let ready = NSNotification.Name("READY")
     static let guildMemberChunk = NSNotification.Name("GUILD_MEMBER_CHUNK")
     static let typingStart = NSNotification.Name("TYPING_START")
+    static let readyProcessed = NSNotification.Name("READY_PROCESSED")
+    static let messageReactionAdd = NSNotification.Name("MESSAGE_REACTION_ADD")
+    static let messageReactionRemove = NSNotification.Name("MESSAGE_REACTION_REMOVE")
+    static let presenceUpdate = NSNotification.Name("PRESENCE_UPDATE")
 }
 
 public extension Notification.Name {

@@ -1,0 +1,23 @@
+{
+  "pins" : [
+    {
+      "identity" : "foundationcompatkit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/JWIMaster/FoundationCompatKit.git",
+      "state" : {
+        "branch" : "master",
+        "revision" : "64c38757ed7e06be3d6966cfee6272e995276d80"
+      }
+    },
+    {
+      "identity" : "nsjsonserialization-for-swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/JWIMaster/NSJSONSerialization-for-Swift",
+      "state" : {
+        "branch" : "master",
+        "revision" : "7f30560fccca01843cff7ff1c6be4c0a1f066cac"
+      }
+    }
+  ],
+  "version" : 2
+}

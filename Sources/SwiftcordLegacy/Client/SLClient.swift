@@ -153,6 +153,21 @@ public class SLClient {
             completion(nil)
         }
     }
+    
+    public func delete(ownReaction: Reaction, in channel: Snowflake, on message: Snowflake , completion: @escaping ((Error?) -> ())) {
+        guard let emoji = ownReaction.emoji else { return }
+        var emojiString: String
+        if let emojiID = emoji.id?.description, let emojiName = emoji.name {
+            emojiString = "\(emojiName):\(emojiID)"
+        } else if let emojiName = emoji.name {
+            emojiString = emojiName.urlPathPercentEncoded()
+        } else {
+            emojiString = ""
+        }
+        self.request(.deleteOwnReaction(channel: channel, message: message, emoji: emojiString)) { _, _ in
+            completion(nil)
+        }
+    }
 }
 
 
