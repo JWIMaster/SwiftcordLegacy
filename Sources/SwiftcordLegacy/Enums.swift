@@ -109,3 +109,4 @@ public enum EmbedType: String {
     case rich = "rich"
     case image = "image"
 }
+

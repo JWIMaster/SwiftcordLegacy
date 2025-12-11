@@ -47,7 +47,7 @@ public class Guild: DictionaryConvertible, CustomStringConvertible {
 
                 switch type {
 
-                case .guildText:
+                case .guildText, .guildNews:
                     var channel = GuildText(slClient, channelJson)
                     channel.guild = self
                     self.channels[channel.id!] = channel
