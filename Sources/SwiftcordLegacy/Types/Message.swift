@@ -148,3 +148,12 @@ public struct Emoji: Equatable {
         self.name = json["name"] as? String
     }
 }
+
+public struct MessageCall {
+    public var participants: [Snowflake]?
+    public var endedTimestamp: Date?
+    
+    public init(_ json: [String: Any]) {
+        self.participants = (json["participants"] as? [String])?.compactMap({ Snowflake($0) })
+    }
+}

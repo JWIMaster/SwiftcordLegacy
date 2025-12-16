@@ -24,6 +24,7 @@ public class User: Equatable, CustomStringConvertible, DictionaryConvertible {
     public let relationship: Relationship?
     public var bio: String?
     public var mfaEnabled: Bool
+    public var avatarDecorationHash: String?
     
     public init(_ slClient: SLClient, _ json: [String: Any], nickname: String? = nil, relationship: Relationship = .unknown) {
         self.id = Snowflake(json["id"] as? String)
@@ -40,6 +41,9 @@ public class User: Equatable, CustomStringConvertible, DictionaryConvertible {
             self.nickname = nickname
         }
         self.relationship = relationship
+        if let avatarDecorationJson = json["avatar_decoration_data"] as? [String: Any] {
+            self.avatarDecorationHash = avatarDecorationJson["asset"] as? String
+        }
     }
     
     public var description: String {
@@ -71,6 +75,7 @@ public class User: Equatable, CustomStringConvertible, DictionaryConvertible {
 public struct UserProfile {
     public var pronouns: String?
     public var themeColors: [UIColor]
+    public var bannerHash: String?
     
     public init(_ slClient: SLClient, _ json: [String: Any]) {
         self.pronouns = json["pronouns"] as? String
@@ -79,7 +84,7 @@ public struct UserProfile {
         } else {
             self.themeColors = []
         }
-
+        self.bannerHash = json["banner"] as? String
     }
 }
 

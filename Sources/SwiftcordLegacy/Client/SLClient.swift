@@ -11,7 +11,7 @@ import FoundationCompatKit
 import Foundation
 
 /// Swiftcord Legacy client class
-public class SLClient {
+public final class SLClient {
     public let token: String
     public let session: URLSessionCompat
     public let sessionConfig: URLSessionConfigurationCompat = {
@@ -88,6 +88,7 @@ public class SLClient {
         self.request(.getUserProfile(user: userID)) { data, error in
             guard let jsonData = data as? [String: Any] else { return }
             guard let userData = jsonData["user"] as? [String: Any] else { return }
+            print(jsonData)
             let user = User(self, userData)
             guard let profileData = jsonData["user_profile"] as? [String: Any] else { return }
             let userProfile = UserProfile(self, profileData)
