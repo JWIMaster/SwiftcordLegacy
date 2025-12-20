@@ -25,6 +25,7 @@ public final class SLClient {
     public var dms = [Snowflake: DMChannel]()
     public var guilds = [Snowflake: Guild]()
     
+    
 
     
     public var presences = [Snowflake: PresenceType]()
@@ -33,7 +34,7 @@ public final class SLClient {
     
     public var clientUserSettings: UserSettings?
     
-    public var relationships: [Snowflake: (Relationship, String?)] = [:]
+    public var relationships = [Snowflake: (Relationship, String?)]()
     
     public var friends = [User]()
     

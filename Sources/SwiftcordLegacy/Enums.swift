@@ -10,6 +10,7 @@ import Foundation
 public enum Endpoint {
     case getDMChannels
     case getMessages(Snowflake)
+    case getMessagesBefore(message: Snowflake, channel: Snowflake, limit: Int)
     case getGuilds
     case getClientUser
     case sendMessage(Snowflake)
@@ -109,4 +110,14 @@ public enum EmbedType: String {
     case rich = "rich"
     case image = "image"
 }
+
+public enum MessageType: Int {
+    case `default` = 0
+    case recipientAdd = 1
+    case recipientRemove = 2
+    case call = 3
+    case userJoin = 7
+    case reply = 19
+}
+
 

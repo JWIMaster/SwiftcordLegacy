@@ -85,6 +85,30 @@ extension SLClient {
         }
     }
     
+    public func getChannelMessages(before message: Message,for channel: Snowflake, completion: @escaping ([Message], Error?) -> ()) {
+        guard let messageID = message.id else { return }
+        self.getChannelMessages(before: messageID, for: channel) { messages, _ in
+            completion(messages, nil)
+        }
+    }
+    
+    public func getChannelMessages(before messageID: Snowflake, for channel: Snowflake, completion: @escaping ([Message], Error?) -> ()) {
+        self.request(.getMessagesBefore(message: messageID, channel: channel, limit: 50)) { data, error in
+            if let data = data {
+                var messages: [Message] = []
+                
+                let messageArray = data as? [[String: Any]]
+                
+                guard let messageArray = messageArray else { return }
+                
+                for message in messageArray {
+                    messages.append(Message(self, message))
+                }
+                completion(messages.reversed(), nil)
+            }
+        }
+    }
+    
     ///Get a channel via a Snowflake ID
     public func getChannel(_ channelID: Snowflake, completion: @escaping (Channel?, Error?) -> ()) {
         // First, check all guilds for this channel in cache

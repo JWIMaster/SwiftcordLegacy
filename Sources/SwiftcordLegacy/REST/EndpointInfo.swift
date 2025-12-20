@@ -16,6 +16,8 @@ extension Endpoint {
             return(.get, "/users/@me/channels")
         case let .getMessages(channelID):
             return(.get, "/channels/\(channelID)/messages?limit=50")
+        case let .getMessagesBefore(messageID, channelID, limit):
+            return (.get, "/channels/\(channelID)/messages?before=\(messageID)&limit=\(limit)")
         case .getGuilds:
             return (.get, "/users/@me/guilds")
         case .getClientUser:

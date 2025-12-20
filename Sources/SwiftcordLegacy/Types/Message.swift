@@ -17,6 +17,8 @@ public protocol DiscordMessage {
     var edited: Bool { get }
     var embeds: [Embed]? { get }
     var mentions: [User] { get set }
+    var type: MessageType { get }
+    var reactions: [Reaction] { get set }
 }
 
 public struct Message: DiscordMessage {
@@ -31,8 +33,11 @@ public struct Message: DiscordMessage {
     public let embeds: [Embed]?
     public var mentions = [User]()
     public var reactions = [Reaction]()
+    public var type: MessageType
+    public var call: MessageCall?
     
     public init(_ slClient: SLClient, _ json: [String: Any]) {
+        self.type = MessageType(rawValue: json["type"] as? Int ?? 0) ?? .default
         self.id = Snowflake(json["id"])
         
         if let authorJson = json["author"] as? [String: Any] {
@@ -47,7 +52,11 @@ public struct Message: DiscordMessage {
         self.timestamp = (json["timestamp"] as? String)?.date
         
         self.edited = !(json["edited_timestamp"] is NSNull)
-
+        
+        if let call = json["call"] as? [String: Any] {
+            self.call = MessageCall(call)
+        }
+        
         if let replyJson = json["referenced_message"] as? [String: Any] {
             self.replyMessage = ReplyMessage(slClient, replyJson)
         } else {
@@ -86,6 +95,8 @@ public struct ReplyMessage: DiscordMessage {
     public let edited: Bool
     public let embeds: [Embed]?
     public var mentions = [User]()
+    public var type: MessageType
+    public var reactions = [Reaction]()
     
     public init(_ slClient: SLClient, _ json: [String: Any]) {
         self.id = Snowflake(json["id"])
@@ -118,6 +129,7 @@ public struct ReplyMessage: DiscordMessage {
         if let mentions = json["mentions"] as? [[String: Any]] {
             self.mentions = mentions.map { User(slClient, $0) }
         }
+        self.type = MessageType(rawValue: json["type"] as? Int ?? 0) ?? .default
     }
 }
 
