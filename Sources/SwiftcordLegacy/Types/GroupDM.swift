@@ -18,6 +18,7 @@ public struct GroupDM: DMChannel {
     
     
     init?(_ slClient: SLClient, _ json: [String: Any], _ relationships: [Snowflake: (Relationship, String?)]? = nil) {
+        print(json)
         self.slClient = slClient
         if let recipients = json["recipients"] as? [[String: Any]] {
             var users: [User] = []
@@ -33,6 +34,17 @@ public struct GroupDM: DMChannel {
         } else {
             self.recipients = nil
         }
+        
+        if let recipientIDs = json["recipient_ids"] as? [String] {
+            var users = [User]()
+            let recipientIDs = recipientIDs.compactMap { Snowflake($0) }
+            for recipientID in recipientIDs {
+                if let user = slClient.users[recipientID] {
+                    users.append(user)
+                }
+            }
+            self.recipients = users
+        }
 
         
         self.id = Snowflake(json["id"] as? String)
@@ -44,11 +56,11 @@ public struct GroupDM: DMChannel {
     
     public func convertToDict() -> [String: Any] {
         return [
-            "id": self.id?.description,
+            "id": self.id?.description ?? "",
             "name": self.name ?? "",
             "last_message_id": self.lastMessageID?.description ?? "",
             "type": self.type.rawValue,
-            "recipients": self.recipients?.map { $0.convertToDict() } ?? []
+            "recipients": self.recipients?.compactMap { $0.convertToDict() } ?? []
         ]
     }
 }

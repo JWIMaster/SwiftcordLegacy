@@ -61,7 +61,15 @@ extension SLClient {
                     }
                 }
             }
-
+            
+            self.users = Dictionary(
+                users.values.compactMap { user in
+                    let user = User(self, user)
+                    return user.id.map { ($0, user) }
+                },
+                uniquingKeysWith: { _, new in new }
+            )
+            
             autoreleasepool {
                 if let privateChannels = data["private_channels"] as? [[String: Any]] {
                     for channel in privateChannels {

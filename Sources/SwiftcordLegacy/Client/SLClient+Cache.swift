@@ -60,9 +60,9 @@ public class CacheManager {
             // DMs
             var dmDict: [String: [String: Any]] = [:]
             for (id, dmChannel) in dmsCopy {
-                if let dm = dmChannel as? DM {
+                if dmChannel.type == .dm, let dm = dmChannel as? DM {
                     dmDict[id.description] = dm.convertToDict()
-                } else if let gdm = dmChannel as? GroupDM {
+                } else if dmChannel.type == .groupDM, let gdm = dmChannel as? GroupDM {
                     dmDict[id.description] = gdm.convertToDict()
                 }
             }
@@ -161,16 +161,16 @@ public class CacheManager {
             if let cachedDMs = json["dms"] as? [String: [String: Any]] {
                 for (id, dmJSON) in cachedDMs {
                     guard let recipients = dmJSON["recipients"] as? [[String: Any]], !recipients.isEmpty else {
-                        client.logger.log("Skipping DM \(id) with no recipients")
+                        print("Skipping DM \(id) with no recipients")
                         continue
                     }
 
-                    if let dm = DM(client, dmJSON, client.relationships) {
+                    if dmJSON["type"] as! Int != 3, let dm = DM(client, dmJSON, client.relationships) {
                         client.dms[Snowflake(id)!] = dm
                     } else if let gdm = GroupDM(client, dmJSON, client.relationships) {
                         client.dms[Snowflake(id)!] = gdm
                     } else {
-                        client.logger.log("Failed to load DM \(id)")
+                        print("failed to load dm \(id)")
                     }
                 }
             }

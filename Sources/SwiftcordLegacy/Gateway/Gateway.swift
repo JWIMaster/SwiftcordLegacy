@@ -241,19 +241,19 @@ public class Gateway: NSObject {
         case .messageCreate:
             let message = Message(slClient, data)
             DispatchQueue.main.async {
-                self.onMessageCreate?(message)
+                //self.onMessageCreate?(message)
                 NotificationCenter.default.post(name: .messageCreate, object: message)
             }
         case .messageUpdate:
             let message = Message(slClient, data)
             DispatchQueue.main.async {
-                self.onMessageUpdate?(message)
+                //self.onMessageUpdate?(message)
                 NotificationCenter.default.post(name: .messageUpdate, object: message)
             }
         case .messageDelete:
             let message = Message(slClient, data)
             DispatchQueue.main.async {
-                self.onMessageDelete?(message)
+                //self.onMessageDelete?(message)
                 NotificationCenter.default.post(name: .messageDelete, object: message)
             }
         case .guildMembersChunk:
@@ -272,7 +272,7 @@ public class Gateway: NSObject {
             if !members.isEmpty {
                 DispatchQueue.main.async {
                     NotificationCenter.default.post(name: .guildMemberChunk, object: members)
-                    self.handleGuildMemberChunk(members)
+                    //self.handleGuildMemberChunk(members)
                 }
             }
         case .guildMemberListUpdate:
@@ -295,7 +295,7 @@ public class Gateway: NSObject {
             let members = guild.members
             guard !members.isEmpty else { return }
             DispatchQueue.main.async {
-                self.handleGuildMemberListUpdate(members)
+                //self.handleGuildMemberListUpdate(members)
             }
         case .threadListSync:
             guard let guildIdStr = data["guild_id"] as? String,
@@ -315,7 +315,7 @@ public class Gateway: NSObject {
             
             // Notify UI if needed
             DispatchQueue.main.async {
-                self.handleThreadListSync?(guildId)
+                //self.handleThreadListSync?(guildId)
             }
         case .typingStart:
             guard let channelID = Snowflake(data["channel_id"] as? String), let userID = Snowflake(data["user_id"] as? String) else { return }
@@ -329,7 +329,7 @@ public class Gateway: NSObject {
                 }
             }
             DispatchQueue.main.async {
-                self.onTypingStart?(channelID, userID)
+                //self.onTypingStart?(channelID, userID)
                 NotificationCenter.default.post(name: .typingStart, object: (channelID, userID))
             }
         case .presenceUpdate:
@@ -337,7 +337,7 @@ public class Gateway: NSObject {
             self.slClient.presences[userID] = presence
             DispatchQueue.main.async {
                 NotificationCenter.default.post(name: .presenceUpdate, object: [userID: presence])
-                self.handlePresenceUpdate([userID: presence])
+                //self.handlePresenceUpdate([userID: presence])
             }
         case .messageReactionAdd:
             var reaction = Reaction(data)
