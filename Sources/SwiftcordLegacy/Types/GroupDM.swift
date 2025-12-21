@@ -31,11 +31,9 @@ public struct GroupDM: DMChannel {
                 users.append(User(slClient, recipient, nickname: relationshipInfo.1, relationship: relationshipInfo.0))
             }
             self.recipients = users
-        } else {
-            self.recipients = nil
         }
         
-        if let recipientIDs = json["recipient_ids"] as? [String] {
+        /*if let recipientIDs = json["recipient_ids"] as? [String] {
             var users = [User]()
             let recipientIDs = recipientIDs.compactMap { Snowflake($0) }
             for recipientID in recipientIDs {
@@ -44,7 +42,7 @@ public struct GroupDM: DMChannel {
                 }
             }
             self.recipients = users
-        }
+        }*/
 
         
         self.id = Snowflake(json["id"] as? String)

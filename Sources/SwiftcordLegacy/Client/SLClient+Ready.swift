@@ -62,13 +62,13 @@ extension SLClient {
                 }
             }
             
-            self.users = Dictionary(
+            /*self.users = Dictionary(
                 users.values.compactMap { user in
                     let user = User(self, user)
                     return user.id.map { ($0, user) }
                 },
                 uniquingKeysWith: { _, new in new }
-            )
+            )*/
             
             autoreleasepool {
                 if let privateChannels = data["private_channels"] as? [[String: Any]] {
@@ -89,7 +89,12 @@ extension SLClient {
                             }
 
                         case 3:
-                            if let groupDM = GroupDM(self, channel) {
+                            var channelJSON = channel
+                            if let recipientIDs = channel["recipient_ids"] as? [String] {
+                                let recipientsJSON = recipientIDs.compactMap { users[$0] }
+                                channelJSON["recipients"] = recipientsJSON
+                            }
+                            if let groupDM = GroupDM(self, channelJSON) {
                                 self.dms[groupDM.id!] = groupDM
                             }
 
