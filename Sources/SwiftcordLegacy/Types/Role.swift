@@ -20,14 +20,14 @@ public struct Role: DictionaryConvertible {
     public let icon: String?
     
     init(_ json: [String: Any]) {
-        self.color = UIColor(discordColor: json["color"] as! Int)
-        self.isHoisted = json["hoist"] as! Bool
+        self.color = UIColor(discordColor: json["color"] as? Int ?? 0)
+        self.isHoisted = json["hoist"] as? Bool ?? false
         self.id = Snowflake(json["id"])!
-        self.isManaged = json["managed"] as! Bool
-        self.isMentionable = json["mentionable"] as! Bool
-        self.name = json["name"] as! String
+        self.isManaged = json["managed"] as? Bool ?? false
+        self.isMentionable = json["mentionable"] as? Bool ?? false
+        self.name = json["name"] as? String ?? ""
         self.permissions = json["permissions"] as? Int
-        self.position = json["position"] as! Int
+        self.position = json["position"] as? Int ?? 0
         self.icon = json["icon"] as? String
     }
     

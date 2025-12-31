@@ -110,7 +110,7 @@ public let discordSuperProperties: [String: Any] = {
     let properties: [String: Any] = [
         "os": "iOS",
         "browser": "Discord iOS",
-        "device": modelCode,
+        "device": modelCode ?? "",
         "system_locale": "en-US",
         "client_version": "0.0.326",
         "release_channel": "stable",
