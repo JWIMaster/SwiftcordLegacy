@@ -18,7 +18,6 @@ public struct GroupDM: DMChannel {
     
     
     init?(_ slClient: SLClient, _ json: [String: Any], _ relationships: [Snowflake: (Relationship, String?)]? = nil) {
-        print(json)
         self.slClient = slClient
         if let recipients = json["recipients"] as? [[String: Any]] {
             var users: [User] = []

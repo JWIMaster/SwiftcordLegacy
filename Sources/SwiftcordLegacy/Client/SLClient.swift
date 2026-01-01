@@ -91,11 +91,10 @@ public final class SLClient {
         self.request(.getUserProfile(user: userID)) { data, error in
             guard let jsonData = data as? [String: Any] else { return }
             guard let userData = jsonData["user"] as? [String: Any] else { return }
-            print(jsonData)
             let user = User(self, userData)
             guard let profileData = jsonData["user_profile"] as? [String: Any] else { return }
             let userProfile = UserProfile(self, profileData)
-            
+            print(userProfile)
             completion(user, userProfile, nil)
         }
     }

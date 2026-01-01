@@ -57,7 +57,7 @@ public class Guild: DictionaryConvertible, CustomStringConvertible {
                     }
 
                 case .guildForum:
-                    var forum = GuildForum(slClient, channelJson)
+                    let forum = GuildForum(slClient, channelJson)
                     forum.guild = self
                     self.channels[forum.id!] = forum
 

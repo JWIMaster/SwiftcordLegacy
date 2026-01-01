@@ -7,7 +7,7 @@
 
 import Foundation
 
-typealias EndpointInfo = (method: HTTPMethod, url: String)
+public typealias EndpointInfo = (method: HTTPMethod, url: String)
 
 extension Endpoint {
     var httpInfo: EndpointInfo {

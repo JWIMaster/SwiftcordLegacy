@@ -76,6 +76,10 @@ public struct UserProfile {
     public var pronouns: String?
     public var themeColors: [UIColor]
     public var bannerHash: String?
+    public var profileBadges: [ProfileBadge]?
+    public var legacyUsername: String?
+    public var mutualFriends: [User]?
+    public var mutualGuilds: [Guild]?
     
     public init(_ slClient: SLClient, _ json: [String: Any]) {
         self.pronouns = json["pronouns"] as? String
@@ -85,6 +89,22 @@ public struct UserProfile {
             self.themeColors = []
         }
         self.bannerHash = json["banner"] as? String
+        self.profileBadges = (json["badges"] as? [[String: Any]])?.compactMap { ProfileBadge($0) }
+        self.legacyUsername = json["legacy_username"] as? String
+    }
+}
+
+public struct ProfileBadge {
+    public var id: String?
+    public var description: String?
+    public var icon: String?
+    public var link: String?
+    
+    public init(_ json: [String: Any]) {
+        self.id = json["id"] as? String
+        self.description = json["description"] as? String
+        self.icon = json["icon"] as? String
+        self.link = json["link"] as? String
     }
 }
 
@@ -173,3 +193,4 @@ public struct GuildMember: CustomStringConvertible, DictionaryConvertible {
         ]
     }
 }
+

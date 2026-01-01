@@ -7,7 +7,7 @@
 
 import Foundation
 
-public class GuildCategory: GuildChannel {
+public class GuildCategory: GuildChannel, CustomStringConvertible {
     public var parentID: Snowflake?
     
     public var position: Int?
@@ -33,14 +33,19 @@ public class GuildCategory: GuildChannel {
         self.id = Snowflake(json["id"] as? String)
         self.name = json["name"] as? String
         self.parentID = Snowflake(json["parent_id"] as? String)
+        self.position = json["position"] as? Int
+    }
+    
+    public var description: String {
+        return "\(name), \(position)"
     }
     
     public func convertToDict() -> [String : Any] {
         return [
-            "id": self.id?.description,
+            "id": self.id?.description ?? "",
             "type": self.type.rawValue,
-            "name": self.name,
-            "parent_id": self.parentID?.description,
+            "name": self.name ?? "",
+            "parent_id": self.parentID?.description ?? "",
             "channels": self.channels.values.map { $0.convertToDict() }
         ]
     }
