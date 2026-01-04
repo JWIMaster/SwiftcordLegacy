@@ -316,6 +316,7 @@ public class Gateway: NSObject {
             // Notify UI if needed
             DispatchQueue.main.async {
                 //self.handleThreadListSync?(guildId)
+                NotificationCenter.default.post(name: .threadListSync, object: (guildId))
             }
         case .typingStart:
             guard let channelID = Snowflake(data["channel_id"] as? String), let userID = Snowflake(data["user_id"] as? String) else { return }

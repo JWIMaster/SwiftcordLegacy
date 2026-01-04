@@ -18,8 +18,15 @@ public extension NSNotification.Name {
     static let messageReactionAdd = NSNotification.Name("MESSAGE_REACTION_ADD")
     static let messageReactionRemove = NSNotification.Name("MESSAGE_REACTION_REMOVE")
     static let presenceUpdate = NSNotification.Name("PRESENCE_UPDATE")
+    static let threadListSync = NSNotification.Name("THREAD_LIST_SYNC")
 }
 
 public extension Notification.Name {
     static let gatewayDidReconnect = Notification.Name("gatewayDidReconnect")
+}
+
+fileprivate extension NSNotification.Name {
+    init(_ event: Event) {
+        self.init(rawValue: event.rawValue)
+    }
 }

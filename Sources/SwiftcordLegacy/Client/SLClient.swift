@@ -11,7 +11,9 @@ import FoundationCompatKit
 import Foundation
 
 /// Swiftcord Legacy client class
+/// Main class for any Discord related actions
 public final class SLClient {
+    /// Authentication token, stored as a string
     public let token: String
     public let session: URLSessionCompat
     public let sessionConfig: URLSessionConfigurationCompat = {
@@ -19,23 +21,30 @@ public final class SLClient {
         config.httpAdditionalHeaders = additionalHeaders
         return config
     }()
+    
+    /// Gateway object, used for realtime websocket communication with Discord, backed by SocketRocket
     public var gateway: Gateway?
+    
+    /// The ClientUser object associated with the token provided
     public var clientUser: ClientUser?
     
+    /// A global storage of the clientUser's DMs
     public var dms = [Snowflake: DMChannel]()
+    
+    /// A global storage of the clientUser's Guilds
     public var guilds = [Snowflake: Guild]()
-    
-    
-
     
     public var presences = [Snowflake: PresenceType]()
     
     public let logger = LegacyLogger(fileName: "rest logs")
     
+    /// The UserSettings object associated with the clientUser
     public var clientUserSettings: UserSettings?
     
+    /// A global storage of the clientUser's relationships
     public var relationships = [Snowflake: (Relationship, String?)]()
     
+    /// A global storage of the clientUser's friends
     public var friends = [User]()
     
     //public var users = [Snowflake: User]()
@@ -48,7 +57,7 @@ public final class SLClient {
     
     public var onReady: (() -> Void)?
 
-    
+    /// Initialise the SLClient object with a token, beginning the Gateway connection to Discord and fetching the clientUser object
     public init(token: String) {
         self.token = token
         
@@ -57,10 +66,9 @@ public final class SLClient {
         self.getClientUser() { user, error in
             
         }
-        
-        
     }
     
+    /// Directly open a Gateway connection, destorying any previous one
     public func connect() {
         if let gateway = gateway {
             gateway.stop()
@@ -71,6 +79,7 @@ public final class SLClient {
         
     }
     
+    /// End the current Gateway connection, and destroy the Gateway object associated with it
     public func disconnect() {
         if let gateway = gateway {
             gateway.stop()
@@ -79,6 +88,7 @@ public final class SLClient {
         self.gateway = nil
     }
     
+    /// Fetch a User object from a UserID (Snowflake)
     public func getUser(withID userID: Snowflake, completion: @escaping (User, Error?) -> ()) {
         self.request(.getUser(user: userID)) { data, error in
             guard let userData = data as? [String: Any] else { return }
@@ -87,6 +97,7 @@ public final class SLClient {
         }
     }
     
+    /// Fetch a UserProfile object from a UserID (Snowflake)
     public func getUserProfile(withID userID: Snowflake, completion: @escaping (User, UserProfile, Error?) -> ()) {
         self.request(.getUserProfile(user: userID)) { data, error in
             guard let jsonData = data as? [String: Any] else { return }

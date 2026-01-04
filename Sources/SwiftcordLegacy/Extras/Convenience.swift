@@ -7,6 +7,7 @@
 
 import Foundation
 import UIKit
+import FoundationCompatKit
 
 extension Data {
     func base64Encode() -> String {

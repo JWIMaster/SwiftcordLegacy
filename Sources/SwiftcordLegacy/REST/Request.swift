@@ -18,7 +18,8 @@ public extension SLClient {
     }
     
     private static var rateLimits: [String: RateLimitInfo] = [:]
-
+    
+    /// Generic HTTP request function, takes a Discord endpoint and optional Dictionary body
     func request(_ endpoint: Endpoint, body: [String: Any]? = nil, completion: @escaping (Any?, Error?) -> ()) {
         
         // Check if we have rate limit info for this endpoint

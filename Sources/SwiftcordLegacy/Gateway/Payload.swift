@@ -8,6 +8,7 @@
 import Foundation
 import NSJSONSerializationForSwift
 
+/// The base structure of arbitrary data transported to and from Gateway
 struct Payload {
     var op: Int
     var d: Any
